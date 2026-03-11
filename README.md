@@ -21,39 +21,7 @@ DevPagghiaro reduces that operational overhead by turning those commands into st
 - includes a keyboard-first command palette for quick project and service actions
 - exposes a local web UI powered by Bun, Elysia, and Angular
 
-## Local development
-
-```bash
-bun install
-bun run dev:backend
-bun run dev:frontend
-```
-
-Then open `http://localhost:4200`.
-
-## Local packaged runtime
-
-Build the distributable package:
-
-```bash
-bun run build:release
-```
-
-Run it:
-
-```bash
-bun run start
-```
-
-Or call the CLI directly:
-
-```bash
-bun run ./bin/dev-pagghiaro.js --port 3001 --config ./pagghiaro.json
-```
-
-## Published package usage
-
-After publishing to npm, the target workflow is:
+## Usage
 
 ```bash
 bunx @adrianixio/dev-pagghiaro@latest
@@ -73,13 +41,3 @@ bunx @adrianixio/dev-pagghiaro@latest --port 4010 --config ./pagghiaro.json --no
 --no-open         Do not open the browser automatically
 -h, --help        Show help
 ```
-
-## Publish checklist
-
-```bash
-bun run build:release
-npm pack
-npm publish
-```
-
-The package publish step relies on `prepack`, so the built backend and frontend assets are included automatically in the npm tarball.
