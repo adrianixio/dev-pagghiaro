@@ -1,0 +1,17 @@
+{
+  "name": "dev-pagghiaro",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "bun run --cwd apps/backend dev",
+    "dev:frontend": "bun run --cwd frontend start",
+    "build:backend": "bun run --cwd apps/backend build",
+    "build:frontend": "bun run --cwd frontend build",
+    "build:shared": "bun run --cwd packages/shared build"
+  }
+}

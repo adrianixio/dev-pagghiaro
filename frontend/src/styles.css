@@ -1,0 +1,51 @@
+@import '@xterm/xterm/css/xterm.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-hacker-900 text-hacker-100 font-sans antialiased;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Custom scrollbar for hacker aesthetic */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-hacker-800;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-hacker-600 rounded-sm;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-hacker-500;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-mono text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-hacker-900;
+  }
+  .btn-primary {
+    @apply bg-neon-green text-hacker-900 hover:bg-green-400 focus:ring-neon-green font-bold;
+  }
+  .btn-secondary {
+    @apply bg-hacker-700 text-hacker-100 hover:bg-hacker-600 focus:ring-hacker-500 border border-hacker-600;
+  }
+  .btn-danger {
+    @apply bg-neon-red text-white hover:bg-red-600 focus:ring-neon-red;
+  }
+  .card {
+    @apply bg-hacker-800 border border-hacker-700 rounded-lg shadow-lg overflow-hidden;
+  }
+  .input-field {
+    @apply w-full bg-hacker-900 border border-hacker-600 rounded-md px-3 py-2 text-hacker-100 font-mono focus:outline-none focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-colors;
+  }
+}
