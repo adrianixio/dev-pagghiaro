@@ -3,10 +3,11 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  Input,
   OnDestroy,
+  OnInit,
   ViewChild,
   ViewEncapsulation,
-  effect,
   inject,
 } from '@angular/core';
 import { FitAddon } from '@xterm/addon-fit';
@@ -15,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { ProjectService } from '../../services/project.service';
 import { TerminalService } from '../../services/terminal.service';
+import { LogMessage } from '../../models/project.model';
 
 @Component({
   selector: 'app-terminal',
@@ -22,44 +24,40 @@ import { TerminalService } from '../../services/terminal.service';
   imports: [CommonModule, LucideAngularModule],
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="h-64 bg-hacker-900 border-t border-hacker-700 flex flex-col transition-all duration-300"
-         [class.h-0]="!terminalService.activeTerminal()"
-         [class.opacity-0]="!terminalService.activeTerminal()"
-         [class.overflow-hidden]="!terminalService.activeTerminal()">
-      @if (terminalService.activeTerminal(); as active) {
-        <div class="flex items-center justify-between px-4 py-2 bg-hacker-800 border-b border-hacker-700">
-          <div class="flex items-center gap-2 text-hacker-200 font-mono text-sm">
-            <lucide-icon name="terminal" [size]="14" class="text-neon-blue"></lucide-icon>
-            <span class="text-neon-green">{{ getProjectName(active.projectId) }}</span>
-            <span class="text-hacker-500">/</span>
-            <span class="text-neon-blue">{{ active.serviceName }}</span>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button class="p-1.5 rounded hover:bg-hacker-700 text-hacker-400 hover:text-neon-yellow transition-colors"
-                    (click)="scrollToBottom()" title="Scroll to Bottom">
-              <lucide-icon name="arrow-down-to-line" [size]="14"></lucide-icon>
-            </button>
-            <button class="p-1.5 rounded hover:bg-hacker-700 text-hacker-400 hover:text-neon-red transition-colors"
-                    (click)="clearTerminal()" title="Clear Logs">
-              <lucide-icon name="trash-2" [size]="14"></lucide-icon>
-            </button>
-            <div class="w-px h-4 bg-hacker-600 mx-1"></div>
-            <button class="p-1.5 rounded hover:bg-hacker-700 text-hacker-400 hover:text-hacker-100 transition-colors"
-                    (click)="closeTerminal()" title="Close Terminal">
-              <lucide-icon name="x" [size]="14"></lucide-icon>
-            </button>
-          </div>
+    <div class="h-full w-full bg-rustic-900 border-t border-rustic-700 flex flex-col transition-all duration-300">
+      <div class="flex items-center justify-between px-4 py-2 bg-rustic-800 border-b border-rustic-700">
+        <div class="flex items-center gap-2 text-rustic-200 font-mono text-sm">
+          <lucide-icon name="terminal" [size]="14" class="text-country-blue"></lucide-icon>
+          <span class="text-country-green">{{ getProjectName(active.projectId) }}</span>
+          <span class="text-rustic-500">/</span>
+          <span class="text-country-blue">{{ active.serviceName }}</span>
         </div>
 
-        <div class="flex-1 relative bg-[#0a0a0a] p-2">
-          <div #terminalContainer class="absolute inset-0 p-2"></div>
+        <div class="flex items-center gap-2">
+          <button class="p-1.5 rounded hover:bg-rustic-700 text-rustic-400 hover:text-country-yellow transition-colors"
+                  (click)="scrollToBottom()" title="Scroll to Bottom">
+            <lucide-icon name="arrow-down-to-line" [size]="14"></lucide-icon>
+          </button>
+          <button class="p-1.5 rounded hover:bg-rustic-700 text-rustic-400 hover:text-country-red transition-colors"
+                  (click)="clearTerminal()" title="Clear Logs">
+            <lucide-icon name="trash-2" [size]="14"></lucide-icon>
+          </button>
+          <div class="w-px h-4 bg-rustic-600 mx-1"></div>
+          <button class="p-1.5 rounded hover:bg-rustic-700 text-rustic-400 hover:text-rustic-100 transition-colors"
+                  (click)="closeTerminal()" title="Close Terminal">
+            <lucide-icon name="x" [size]="14"></lucide-icon>
+          </button>
         </div>
-      }
+      </div>
+
+      <div class="flex-1 relative bg-[#1a1412] p-2">
+        <div #terminalContainer class="absolute inset-0 p-2"></div>
+      </div>
     </div>
   `,
 })
-export class TerminalComponent implements AfterViewInit, OnDestroy {
+export class TerminalComponent implements OnInit, AfterViewInit, OnDestroy {
+  @Input({ required: true }) active!: { projectId: string; serviceId: string; serviceName: string };
   @ViewChild('terminalContainer') terminalContainer!: ElementRef<HTMLElement>;
 
   readonly terminalService = inject(TerminalService);
@@ -69,28 +67,35 @@ export class TerminalComponent implements AfterViewInit, OnDestroy {
   private fitAddon?: FitAddon;
   private logsSub?: Subscription;
   private resizeObserver?: ResizeObserver;
+  private pendingLogs: LogMessage[] = [];
 
-  constructor() {
-    effect(() => {
-      const active = this.terminalService.activeTerminal();
-      if (active && this.terminalContainer) {
-        setTimeout(() => {
-          if (!this.terminal) {
-            this.initTerminal();
-          }
-          this.terminal?.clear();
-          this.fitAddon?.fit();
-          if (this.terminal) {
-            this.terminalService.sendResize(this.terminal.cols, this.terminal.rows);
-            this.terminal.focus();
-          }
-        }, 50);
+  ngOnInit(): void {
+    this.logsSub = this.terminalService.logs$.subscribe((log) => {
+      if (log.projectId !== this.active.projectId || log.serviceId !== this.active.serviceId) {
+        return;
+      }
+
+      if (log.type === 'system' && log.data === '\x1b[2J\x1b[H') {
+        if (this.terminal) {
+          this.terminal.clear();
+        } else {
+          this.pendingLogs = [];
+        }
+        return;
+      }
+
+      if (this.terminal) {
+        this.terminal.write(log.data);
+      } else {
+        this.pendingLogs.push(log);
       }
     });
   }
 
   ngAfterViewInit(): void {
-    // Terminal bootstraps lazily when a service is selected.
+    setTimeout(() => {
+      this.initTerminal();
+    }, 50);
   }
 
   getProjectName(projectId: string): string {
@@ -102,11 +107,11 @@ export class TerminalComponent implements AfterViewInit, OnDestroy {
   }
 
   clearTerminal(): void {
-    this.terminalService.clearTerminal();
+    this.terminalService.clearTerminal(this.active.projectId, this.active.serviceId);
   }
 
   closeTerminal(): void {
-    this.terminalService.closeTerminal();
+    this.terminalService.closeTerminal(this.active.serviceId);
   }
 
   ngOnDestroy(): void {
@@ -122,25 +127,25 @@ export class TerminalComponent implements AfterViewInit, OnDestroy {
 
     this.terminal = new Terminal({
       theme: {
-        background: '#0a0a0a',
-        foreground: '#cccccc',
-        cursor: '#00ff00',
-        black: '#000000',
-        red: '#ff0033',
-        green: '#00ff00',
-        yellow: '#ffff00',
-        blue: '#00ffff',
-        magenta: '#ff00ff',
-        cyan: '#00ffff',
-        white: '#ffffff',
-        brightBlack: '#666666',
-        brightRed: '#ff3366',
-        brightGreen: '#33ff33',
-        brightYellow: '#ffff33',
-        brightBlue: '#33ffff',
-        brightMagenta: '#ff33ff',
-        brightCyan: '#33ffff',
-        brightWhite: '#ffffff',
+        background: '#1a1412',
+        foreground: '#f4e4d8',
+        cursor: '#556b2f',
+        black: '#1a1412',
+        red: '#8b0000',
+        green: '#556b2f',
+        yellow: '#daa520',
+        blue: '#4682b4',
+        magenta: '#d87093',
+        cyan: '#4682b4',
+        white: '#f4e4d8',
+        brightBlack: '#6b574b',
+        brightRed: '#a52a2a',
+        brightGreen: '#6b8e23',
+        brightYellow: '#f0e68c',
+        brightBlue: '#5f9ea0',
+        brightMagenta: '#ffb6c1',
+        brightCyan: '#87ceeb',
+        brightWhite: '#faf5f0',
       },
       fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace',
       fontSize: 13,
@@ -155,33 +160,24 @@ export class TerminalComponent implements AfterViewInit, OnDestroy {
     this.fitAddon.fit();
 
     this.terminal.onData((data) => {
-      this.terminalService.sendInput(data);
+      this.terminalService.sendInput(this.active.serviceId, data);
     });
 
     this.terminal.onResize(({ cols, rows }) => {
-      this.terminalService.sendResize(cols, rows);
+      this.terminalService.sendResize(this.active.serviceId, cols, rows);
     });
 
-    this.logsSub = this.terminalService.logs$.subscribe((log) => {
-      const active = this.terminalService.activeTerminal();
-      if (!active || log.projectId !== active.projectId || log.serviceId !== active.serviceId) {
-        return;
-      }
-
-      if (log.type === 'system' && log.data === '\x1b[2J\x1b[H') {
-        this.terminal?.clear();
-        return;
-      }
-
-      this.terminal?.write(log.data);
-    });
+    for (const log of this.pendingLogs) {
+      this.terminal.write(log.data);
+    }
+    this.pendingLogs = [];
 
     this.resizeObserver = new ResizeObserver(() => {
       if (!this.fitAddon || !this.terminal) {
         return;
       }
       this.fitAddon.fit();
-      this.terminalService.sendResize(this.terminal.cols, this.terminal.rows);
+      this.terminalService.sendResize(this.active.serviceId, this.terminal.cols, this.terminal.rows);
     });
     this.resizeObserver.observe(this.terminalContainer.nativeElement);
   }

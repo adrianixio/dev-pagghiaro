@@ -13,27 +13,27 @@ import { UiService } from '../../services/ui.service';
   imports: [CommonModule, FormsModule, LucideAngularModule],
   template: `
     @if (commandPaletteService.isOpen()) {
-      <div class="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/80 backdrop-blur-sm"
+      <div class="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/60 backdrop-blur-sm"
            (click)="close()">
-        <div class="w-full max-w-2xl bg-hacker-800 border border-hacker-600 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        <div class="w-full max-w-2xl bg-white dark:bg-rustic-800 border border-rustic-200 dark:border-rustic-700 rounded-xl shadow-2xl overflow-hidden flex flex-col transition-colors duration-300"
              (click)="$event.stopPropagation()">
-          <div class="flex items-center px-4 py-3 border-b border-hacker-700 bg-hacker-900">
-            <lucide-icon name="search" [size]="20" class="text-hacker-400 mr-3"></lucide-icon>
+          <div class="flex items-center px-4 py-3 border-b border-rustic-200 dark:border-rustic-700 bg-rustic-50 dark:bg-rustic-900 transition-colors duration-300">
+            <lucide-icon name="search" [size]="20" class="text-rustic-400 dark:text-rustic-500 mr-3"></lucide-icon>
             <input #searchInput type="text"
                    [(ngModel)]="searchQuery"
                    (ngModelChange)="filterCommands()"
                    (keydown)="handleKeydown($event)"
                    placeholder="Type a command or search..."
-                   class="flex-1 bg-transparent border-none outline-none text-hacker-100 font-mono text-lg placeholder-hacker-500"
+                   class="flex-1 bg-transparent border-none outline-none text-rustic-900 dark:text-rustic-100 font-sans text-lg placeholder-rustic-400 dark:placeholder-rustic-500"
                    autofocus>
-            <div class="flex items-center gap-1 text-xs text-hacker-500 font-mono">
-              <kbd class="px-1.5 py-0.5 rounded bg-hacker-800 border border-hacker-700">ESC</kbd> to close
+            <div class="flex items-center gap-1 text-xs text-rustic-500 dark:text-rustic-400 font-sans">
+              <kbd class="px-1.5 py-0.5 rounded bg-rustic-100 dark:bg-rustic-800 border border-rustic-200 dark:border-rustic-700">ESC</kbd> to close
             </div>
           </div>
 
           <div class="max-h-[60vh] overflow-y-auto py-2">
             @if (filteredCommands.length === 0) {
-              <div class="px-4 py-8 text-center text-hacker-500 font-mono">
+              <div class="px-4 py-8 text-center text-rustic-500 dark:text-rustic-400 font-sans">
                 No commands found for "{{ searchQuery }}"
               </div>
             } @else {
@@ -41,24 +41,28 @@ import { UiService } from '../../services/ui.service';
                 @for (cmd of filteredCommands; track cmd.id; let i = $index) {
                   <li>
                     <button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors"
-                            [class.bg-hacker-700]="selectedIndex === i"
-                            [class.text-neon-green]="selectedIndex === i"
-                            [class.text-hacker-200]="selectedIndex !== i"
+                            [class.bg-rustic-100]="selectedIndex === i"
+                            [class.dark:bg-rustic-700]="selectedIndex === i"
+                            [class.text-country-green]="selectedIndex === i"
+                            [class.text-rustic-700]="selectedIndex !== i"
+                            [class.dark:text-rustic-300]="selectedIndex !== i"
                             (mouseenter)="selectedIndex = i"
                             (click)="executeCommand(cmd)">
                       @if (cmd.icon) {
                         <lucide-icon [name]="cmd.icon" [size]="16"
-                                     [class.text-neon-green]="selectedIndex === i"
-                                     [class.text-hacker-400]="selectedIndex !== i"></lucide-icon>
+                                     [class.text-country-green]="selectedIndex === i"
+                                     [class.text-rustic-400]="selectedIndex !== i"
+                                     [class.dark:text-rustic-500]="selectedIndex !== i"></lucide-icon>
                       } @else {
                         <div class="w-4 h-4"></div>
                       }
 
                       <div class="flex flex-col">
-                        <span class="font-mono text-sm">{{ cmd.title }}</span>
+                        <span class="font-sans font-medium text-sm">{{ cmd.title }}</span>
                         @if (cmd.description) {
-                          <span class="text-xs text-hacker-500"
-                                [class.text-hacker-400]="selectedIndex === i">{{ cmd.description }}</span>
+                          <span class="text-xs text-rustic-500 dark:text-rustic-400"
+                                [class.text-rustic-600]="selectedIndex === i"
+                                [class.dark:text-rustic-300]="selectedIndex === i">{{ cmd.description }}</span>
                         }
                       </div>
                     </button>
@@ -201,7 +205,7 @@ export class CommandPaletteComponent {
           title: `Open Terminal: ${service.name}`,
           description: `View logs for ${service.command}`,
           icon: 'terminal',
-          action: () => this.terminalService.setActiveTerminal(activeProject.id, service.id, service.name),
+          action: () => this.terminalService.toggleTerminal(activeProject.id, service.id, service.name),
         });
 
         if (service.status === 'running' || service.status === 'restarting') {

@@ -1,4 +1,34 @@
 {
   "version": "1",
-  "projects": []
+  "projects": [
+    {
+      "id": "c9adef79-4b6d-4e00-ac8b-261861163d50",
+      "name": "OmniChat",
+      "rootPath": "C:/Users/adria/Desktop/LAVORO PERSONALE/WhatsappCore",
+      "services": [
+        {
+          "id": "64a53f92-e53d-4c0f-90d2-8055cd62762f",
+          "name": "whatsapp_api",
+          "command": "npm run dev",
+          "cwd": "./PersonalWhatsappApi",
+          "autoStart": false
+        },
+        {
+          "id": "24df0bd3-d13d-4b6c-85c3-a306c84ae3b4",
+          "name": "omnichat_backend",
+          "command": "npm run dev",
+          "cwd": "./WhatsappAI/backend",
+          "autoStart": false
+        },
+        {
+          "id": "2b8fe33e-bb6d-4e30-8e39-5bd2c97ffbc3",
+          "name": "omnichat_frontend",
+          "command": "ng serve",
+          "cwd": "./WhatsappAI/frontend",
+          "autoStart": false
+        }
+      ],
+      "createdAt": "2026-03-11T13:29:41.605Z"
+    }
+  ]
 }

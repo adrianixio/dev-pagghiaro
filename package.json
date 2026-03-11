@@ -1,17 +1,44 @@
 {
   "name": "dev-pagghiaro",
   "version": "0.1.0",
-  "private": true,
+  "description": "Local microservice orchestrator with Bun, Elysia, Angular, and xterm.js",
+  "license": "MIT",
+  "private": false,
+  "author": "adrianixio",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "bun",
+    "elysia",
+    "angular",
+    "terminal",
+    "orchestrator",
+    "microservice",
+    "xterm"
+  ],
   "workspaces": [
     "apps/*",
     "packages/*",
     "frontend"
   ],
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "dev-pagghiaro": "bin/dev-pagghiaro.js"
+  },
   "scripts": {
-    "dev:backend": "bun run --cwd apps/backend dev",
+    "dev:backend": "PAGGHIARO_CONFIG_PATH=./pagghiaro.json bun run --cwd apps/backend dev",
     "dev:frontend": "bun run --cwd frontend start",
     "build:backend": "bun run --cwd apps/backend build",
     "build:frontend": "bun run --cwd frontend build",
-    "build:shared": "bun run --cwd packages/shared build"
+    "build:shared": "bun run --cwd packages/shared build",
+    "build:release": "bun run scripts/build-release.ts",
+    "prepack": "bun run build:release",
+    "start": "bun run ./bin/dev-pagghiaro.js"
   }
 }

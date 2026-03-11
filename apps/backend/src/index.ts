@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { Elysia } from 'elysia';
 import { getProjects } from './config-store';
 import { metricsCollector } from './metrics-collector';
@@ -7,6 +9,7 @@ import { servicesRouter } from './routes/services';
 import { wsLogsRouter } from './routes/ws-logs';
 
 const PORT = Number(process.env['PORT'] ?? 3001);
+const STATIC_DIR = resolveStaticDir();
 
 const app = new Elysia()
   .onRequest(({ set }) => {
@@ -22,9 +25,27 @@ const app = new Elysia()
   .use(projectsRouter)
   .use(servicesRouter)
   .use(wsLogsRouter)
+  .get('/', () => serveIndex())
+  .get('/*', ({ request, set }) => {
+    const url = new URL(request.url);
+    const file = serveStaticPath(url.pathname);
+    if (file) {
+      return file;
+    }
+
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/ws/')) {
+      set.status = 404;
+      return { error: 'NOT_FOUND', message: 'Route not found' };
+    }
+
+    return serveIndex();
+  })
   .listen(PORT);
 
 console.log(`[DevPagghiaro] Backend running on http://localhost:${PORT}`);
+if (STATIC_DIR) {
+  console.log(`[DevPagghiaro] Serving UI from ${STATIC_DIR}`);
+}
 
 void (async () => {
   const projects = await getProjects();
@@ -56,6 +77,43 @@ if (process.platform === 'win32') {
   process.on('SIGBREAK', () => {
     void shutdown('SIGBREAK');
   });
+}
+
+function resolveStaticDir(): string | null {
+  const envPath = process.env['PAGGHIARO_STATIC_DIR'];
+  const candidates = [
+    envPath ? resolve(envPath) : null,
+    join(process.cwd(), 'dist', 'frontend', 'browser'),
+    join(import.meta.dir, '..', '..', '..', 'frontend', 'dist', 'frontend', 'browser'),
+    join(import.meta.dir, '..', '..', 'frontend', 'browser'),
+  ].filter((value): value is string => Boolean(value));
+
+  return candidates.find((candidate) => existsSync(candidate)) ?? null;
+}
+
+function serveIndex(): Response | Blob | null {
+  if (!STATIC_DIR) {
+    return new Response('Frontend build not found. Run the frontend build first.', { status: 503 });
+  }
+  return Bun.file(join(STATIC_DIR, 'index.html'));
+}
+
+function serveStaticPath(pathname: string): Blob | null {
+  if (!STATIC_DIR) {
+    return null;
+  }
+
+  const normalized = pathname.replace(/^\/+/, '');
+  if (!normalized) {
+    return Bun.file(join(STATIC_DIR, 'index.html'));
+  }
+
+  const filePath = join(STATIC_DIR, normalized);
+  if (!existsSync(filePath)) {
+    return null;
+  }
+
+  return Bun.file(filePath);
 }
 
 export type App = typeof app;

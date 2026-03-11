@@ -14,66 +14,68 @@ export class TerminalService {
   private readonly logsSubject = new Subject<LogMessage>();
   readonly logs$ = this.logsSubject.asObservable();
 
-  private readonly activeTerminalSignal = signal<{
+  private readonly activeTerminalsSignal = signal<{
     projectId: string;
     serviceId: string;
     serviceName: string;
-  } | null>(null);
-  readonly activeTerminal = this.activeTerminalSignal.asReadonly();
+  }[]>([]);
+  readonly activeTerminals = this.activeTerminalsSignal.asReadonly();
 
-  private ws: WebSocket | null = null;
+  private wsConnections = new Map<string, WebSocket>();
   private readonly projectService = inject(ProjectService);
 
-  setActiveTerminal(projectId: string, serviceId: string, serviceName: string): void {
-    this.activeTerminalSignal.set({ projectId, serviceId, serviceName });
-    this.connectWs(projectId, serviceId);
+  toggleTerminal(projectId: string, serviceId: string, serviceName: string): void {
+    const current = this.activeTerminalsSignal();
+    const exists = current.find(t => t.serviceId === serviceId);
+    
+    if (exists) {
+      this.closeTerminal(serviceId);
+    } else {
+      this.activeTerminalsSignal.set([...current, { projectId, serviceId, serviceName }]);
+      this.connectWs(projectId, serviceId);
+    }
   }
 
-  sendInput(data: string): void {
-    const active = this.activeTerminalSignal();
-    if (!active || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+  sendInput(serviceId: string, data: string): void {
+    const ws = this.wsConnections.get(serviceId);
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
       return;
     }
 
     const message: WsClientMessage = {
       type: 'input',
-      serviceId: active.serviceId,
+      serviceId,
       data,
     };
-    this.ws.send(JSON.stringify(message));
+    ws.send(JSON.stringify(message));
   }
 
-  sendResize(cols: number, rows: number): void {
-    const active = this.activeTerminalSignal();
-    if (!active || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+  sendResize(serviceId: string, cols: number, rows: number): void {
+    const ws = this.wsConnections.get(serviceId);
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
       return;
     }
 
     const message: WsClientMessage = {
       type: 'resize',
-      serviceId: active.serviceId,
+      serviceId,
       cols,
       rows,
     };
-    this.ws.send(JSON.stringify(message));
+    ws.send(JSON.stringify(message));
   }
 
-  async clearTerminal(): Promise<void> {
-    const active = this.activeTerminalSignal();
-    if (!active) {
-      return;
-    }
-
+  async clearTerminal(projectId: string, serviceId: string): Promise<void> {
     this.logsSubject.next({
-      projectId: active.projectId,
-      serviceId: active.serviceId,
+      projectId,
+      serviceId,
       timestamp: Date.now(),
       data: '\x1b[2J\x1b[H',
       type: 'system',
     });
 
     try {
-      await fetch(`${API_BASE}/projects/${active.projectId}/services/${active.serviceId}/clear-logs`, {
+      await fetch(`${API_BASE}/projects/${projectId}/services/${serviceId}/clear-logs`, {
         method: 'POST',
       });
     } catch (error) {
@@ -81,24 +83,25 @@ export class TerminalService {
     }
   }
 
-  closeTerminal(): void {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+  closeTerminal(serviceId: string): void {
+    const ws = this.wsConnections.get(serviceId);
+    if (ws) {
+      ws.close();
+      this.wsConnections.delete(serviceId);
     }
-    this.activeTerminalSignal.set(null);
+    this.activeTerminalsSignal.update(terminals => terminals.filter(t => t.serviceId !== serviceId));
   }
 
   private connectWs(projectId: string, serviceId: string): void {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.wsConnections.has(serviceId)) {
+      return;
     }
 
     const protocol = globalThis.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    this.ws = new WebSocket(`${protocol}//${globalThis.location.host}${WS_BASE}/${serviceId}`);
+    const ws = new WebSocket(`${protocol}//${globalThis.location.host}${WS_BASE}/${serviceId}`);
+    this.wsConnections.set(serviceId, ws);
 
-    this.ws.onmessage = (event) => {
+    ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data as string) as WsServerMessage;
 
@@ -149,8 +152,12 @@ export class TerminalService {
       }
     };
 
-    this.ws.onerror = (error) => {
+    ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+    };
+    
+    ws.onclose = () => {
+      this.wsConnections.delete(serviceId);
     };
   }
 }

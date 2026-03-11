@@ -1,34 +1,36 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     "./src/**/*.{html,ts}",
   ],
   theme: {
     extend: {
       colors: {
-        hacker: {
-          900: '#0a0a0a',
-          800: '#111111',
-          700: '#1a1a1a',
-          600: '#222222',
-          500: '#333333',
-          400: '#444444',
-          300: '#666666',
-          200: '#888888',
-          100: '#aaaaaa',
-          50: '#cccccc',
+        rustic: {
+          900: '#1a1412',
+          800: '#2d241e',
+          700: '#4a3b32',
+          600: '#6b574b',
+          500: '#8c7364',
+          400: '#ad907e',
+          300: '#cead98',
+          200: '#e6ccb8',
+          100: '#f4e4d8',
+          50: '#faf5f0',
         },
-        neon: {
-          green: '#00ff00',
-          blue: '#00ffff',
-          pink: '#ff00ff',
-          yellow: '#ffff00',
-          red: '#ff0033',
+        country: {
+          green: '#556b2f',
+          blue: '#4682b4',
+          pink: '#d87093',
+          yellow: '#daa520',
+          red: '#8b0000',
         }
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', '"Fira Code"', 'Consolas', 'Monaco', 'monospace'],
-        sans: ['"Inter"', 'system-ui', 'sans-serif'],
+        sans: ['"Source Sans 3"', '"Trebuchet MS"', 'sans-serif'],
+        display: ['"Bitter"', 'Georgia', 'serif'],
       }
     },
   },

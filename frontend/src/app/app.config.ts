@@ -1,7 +1,26 @@
-import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import {
+  Activity,
+  ArrowDownToLine,
+  Folder,
+  HardDrive,
+  LucideAngularModule,
+  Play,
+  Plus,
+  RefreshCw,
+  Save,
+  Search,
+  Sun,
+  Moon,
+  Server,
+  Settings,
+  Square,
+  Terminal,
+  Trash2,
+  X,
+} from 'lucide-angular';
 import { routes } from './app.routes';
-import { LucideAngularModule, Folder, Settings, Terminal, Activity, Play, Square, Server, Cpu, HardDrive, Trash2, ArrowDownToLine, X, Search, Save, RefreshCw } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -9,7 +28,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     importProvidersFrom(
       LucideAngularModule.pick({
-        Folder, Settings, Terminal, Activity, Play, Square, Server, Cpu, HardDrive, Trash2, ArrowDownToLine, X, Search, Save, RefreshCw
+        Folder, Settings, Terminal, Activity, Play, Square, Server, HardDrive, Trash2, ArrowDownToLine, X, Search, Save, RefreshCw, Plus, Sun, Moon
       })
     )
   ]

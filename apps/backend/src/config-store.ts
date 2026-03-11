@@ -1,13 +1,30 @@
 /**
- * Config store - reads/writes pagghiaro.json at the repo root.
- * All mutations go through this module to keep persistence centralised.
+ * Config store - reads/writes pagghiaro.json.
  */
 
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import type { PagghiaroConfig, ProjectConfig, ServiceConfig } from '@dev-pagghiaro/shared';
 
-const CONFIG_PATH = join(import.meta.dir, '..', '..', '..', 'pagghiaro.json');
 const DEFAULT_CONFIG: PagghiaroConfig = { version: '1', projects: [] };
+
+function resolveConfigPath(): string {
+  const envPath = process.env['PAGGHIARO_CONFIG_PATH'];
+  if (envPath) {
+    return resolve(envPath);
+  }
+
+  const candidates = [
+    join(process.cwd(), 'pagghiaro.json'),
+    join(import.meta.dir, '..', '..', '..', 'pagghiaro.json'),
+    join(import.meta.dir, '..', '..', 'pagghiaro.json'),
+  ];
+
+  const existing = candidates.find((candidate) => existsSync(candidate));
+  return existing ?? candidates[0]!;
+}
+
+const CONFIG_PATH = resolveConfigPath();
 
 function isStringRecord(value: unknown): value is Record<string, string> {
   if (value === undefined) {
@@ -81,9 +98,7 @@ async function readRaw(): Promise<PagghiaroConfig> {
   try {
     parsed = JSON.parse(rawText);
   } catch (error) {
-    throw new Error(
-      `Failed to parse pagghiaro.json: ${error instanceof Error ? error.message : String(error)}`
-    );
+    throw new Error(`Failed to parse pagghiaro.json at ${CONFIG_PATH}: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   assertConfig(parsed);
@@ -146,18 +161,12 @@ export async function removeProject(id: string): Promise<boolean> {
   return true;
 }
 
-export async function getService(
-  projectId: string,
-  serviceId: string
-): Promise<ServiceConfig | undefined> {
+export async function getService(projectId: string, serviceId: string): Promise<ServiceConfig | undefined> {
   const project = await getProject(projectId);
   return project?.services.find((service) => service.id === serviceId);
 }
 
-export async function addService(
-  projectId: string,
-  service: ServiceConfig
-): Promise<ServiceConfig | undefined> {
+export async function addService(projectId: string, service: ServiceConfig): Promise<ServiceConfig | undefined> {
   const cfg = await readRaw();
   const project = cfg.projects.find((entry) => entry.id === projectId);
   if (!project) {
