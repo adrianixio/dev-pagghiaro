@@ -1,6 +1,6 @@
 {
-  "name": "@adrianixio/dev-pagghiaro",
-  "version": "0.1.1",
+  "name": "dev-pagghiaro",
+  "version": "0.1.2",
   "description": "Local microservice orchestrator",
   "license": "MIT",
   "private": false,

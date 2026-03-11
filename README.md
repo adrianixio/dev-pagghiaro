@@ -24,13 +24,13 @@ DevPagghiaro reduces that operational overhead by turning those commands into st
 ## Usage
 
 ```bash
-bunx @adrianixio/dev-pagghiaro@latest
+bunx dev-pagghiaro@latest
 ```
 
 With options:
 
 ```bash
-bunx @adrianixio/dev-pagghiaro@latest --port 4010 --config ./pagghiaro.json --no-open
+bunx dev-pagghiaro@latest --port 4010 --config ./pagghiaro.json --no-open
 ```
 
 ## CLI options
