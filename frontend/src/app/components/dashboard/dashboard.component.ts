@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { ServiceCardComponent } from '../service-card/service-card.component';
 import { ProjectService } from '../../services/project.service';
+import { UiProject } from '../../models/project.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -55,6 +56,53 @@ import { ProjectService } from '../../services/project.service';
           </div>
         </div>
 
+        @if (getExecutionPlan(project).length > 0) {
+          <div class="mb-8 bg-white dark:bg-rustic-800 border border-rustic-200 dark:border-rustic-700 rounded-lg p-4 shadow-sm transition-colors duration-300">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+              <lucide-icon name="list-ordered" [size]="18" class="text-rustic-500 dark:text-rustic-400"></lucide-icon>
+              <h3 class="text-sm font-bold text-rustic-900 dark:text-rustic-100 uppercase tracking-wider">Execution Plan</h3>
+              @if ((project.executionOrder?.delayMs || 0) > 0) {
+                <span class="ml-2 text-xs font-mono bg-rustic-100 dark:bg-rustic-700 text-rustic-600 dark:text-rustic-300 px-2 py-0.5 rounded">
+                  {{ project.executionOrder?.delayMs }}ms delay
+                </span>
+              }
+              <span class="ml-auto text-xs font-mono bg-country-green/15 text-country-green px-2 py-0.5 rounded-full border border-country-green/30">
+                Included {{ getExecutionPlan(project).length }}
+              </span>
+              @if (getExcludedServices(project).length > 0) {
+                <span class="text-xs font-mono bg-rustic-100 dark:bg-rustic-700 text-rustic-600 dark:text-rustic-300 px-2 py-0.5 rounded-full border border-rustic-200 dark:border-rustic-600">
+                  Excluded {{ getExcludedServices(project).length }}
+                </span>
+              }
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              @for (serviceName of getExecutionPlan(project); track $index; let i = $index; let last = $last) {
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 rounded-full border border-rustic-300 dark:border-rustic-600 bg-rustic-50 dark:bg-rustic-900 px-3 py-1 text-sm text-rustic-700 dark:text-rustic-200">
+                    <span class="text-country-green font-semibold">{{ i + 1 }}</span>
+                    <span>{{ serviceName }}</span>
+                  </div>
+                  @if (!last) {
+                    <lucide-icon name="arrow-right" [size]="14" class="text-rustic-400 dark:text-rustic-500"></lucide-icon>
+                  }
+                </div>
+              }
+            </div>
+            @if (getExcludedServices(project).length > 0) {
+              <div class="mt-4 border-t border-rustic-200 dark:border-rustic-700 pt-3">
+                <div class="text-xs uppercase tracking-[0.2em] text-rustic-500 dark:text-rustic-400 mb-2">Not In Plan</div>
+                <div class="flex flex-wrap gap-2">
+                  @for (serviceName of getExcludedServices(project); track $index) {
+                    <div class="rounded-full border border-rustic-200 dark:border-rustic-600 bg-rustic-100 dark:bg-rustic-900 px-3 py-1 text-sm text-rustic-500 dark:text-rustic-400">
+                      {{ serviceName }}
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
           @for (service of projectService.activeServices(); track service.id) {
             <app-service-card [service]="service" [projectId]="project.id"></app-service-card>
@@ -75,5 +123,25 @@ export class DashboardComponent {
 
   getRunningCount(): number {
     return this.projectService.activeServices().filter((service) => service.status === 'running').length;
+  }
+
+  getExecutionPlan(project: UiProject): string[] {
+    const services = project.services ?? [];
+    const serviceIds = project.executionOrder?.serviceIds ?? services.map((service) => service.id);
+    const plan: string[] = [];
+    for (const id of serviceIds) {
+      const service = services.find((entry) => entry.id === id);
+      if (service) {
+        plan.push(service.name);
+      }
+    }
+    return plan;
+  }
+
+  getExcludedServices(project: UiProject): string[] {
+    const includedIds = new Set(project.executionOrder?.serviceIds ?? (project.services ?? []).map((service) => service.id));
+    return (project.services ?? [])
+      .filter((service) => !includedIds.has(service.id))
+      .map((service) => service.name);
   }
 }

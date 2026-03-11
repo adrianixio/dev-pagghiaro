@@ -16,7 +16,13 @@ export interface ProjectConfig {
   name: string;
   rootPath: string;
   services: ServiceConfig[];
+  executionOrder?: ProjectExecutionOrder;
   createdAt: string;
+}
+
+export interface ProjectExecutionOrder {
+  serviceIds: string[];
+  delayMs?: number;
 }
 
 export interface PagghiaroConfig {
@@ -62,6 +68,12 @@ export interface BulkOperationResult {
   results: ServiceState[];
   succeeded: number;
   failed: number;
+}
+
+export interface AppMetadata {
+  name: string;
+  version: string;
+  author?: string;
 }
 
 export type WsClientMessage =

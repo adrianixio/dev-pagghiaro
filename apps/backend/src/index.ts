@@ -4,6 +4,7 @@ import { Elysia } from 'elysia';
 import { getProjects } from './config-store';
 import { metricsCollector } from './metrics-collector';
 import { processManager } from './process-manager';
+import { autoStartProjectServices } from './project-execution';
 import { projectsRouter } from './routes/projects';
 import { servicesRouter } from './routes/services';
 import { wsLogsRouter } from './routes/ws-logs';
@@ -22,6 +23,14 @@ const app = new Elysia()
     return null;
   })
   .get('/health', () => ({ status: 'ok', ts: Date.now() }))
+  .get('/api/meta', async () => {
+    const pkg = await readAppPackage();
+    return {
+      name: pkg.name,
+      version: pkg.version,
+      author: pkg.author,
+    };
+  })
   .use(projectsRouter)
   .use(servicesRouter)
   .use(wsLogsRouter)
@@ -49,13 +58,7 @@ if (STATIC_DIR) {
 
 void (async () => {
   const projects = await getProjects();
-  await Promise.allSettled(
-    projects.flatMap((project) =>
-      project.services
-        .filter((service) => service.autoStart)
-        .map((service) => processManager.start(project.id, service, project.rootPath))
-    )
-  );
+  await Promise.allSettled(projects.map((project) => autoStartProjectServices(project)));
 })();
 
 async function shutdown(signal: string): Promise<void> {
@@ -114,6 +117,13 @@ function serveStaticPath(pathname: string): Blob | null {
   }
 
   return Bun.file(filePath);
+}
+
+async function readAppPackage(): Promise<{ name: string; version: string; author?: string }> {
+  const packagePath = resolve(import.meta.dir, '..', '..', '..', 'package.json');
+  const raw = await Bun.file(packagePath).text();
+  const parsed = JSON.parse(raw) as { name: string; version: string; author?: string };
+  return parsed;
 }
 
 export type App = typeof app;

@@ -35,17 +35,30 @@ import {
   updateProject,
 } from "../config-store";
 import { processManager } from "../process-manager";
+import { runOrderedProjectOperation } from "../project-execution";
 
 // ─── Validation schemas ───────────────────────────────────────────────────────
 
 const CreateProjectSchema = t.Object({
   name: t.String({ minLength: 1 }),
   rootPath: t.String({ minLength: 1 }),
+  executionOrder: t.Optional(
+    t.Object({
+      serviceIds: t.Array(t.String()),
+      delayMs: t.Optional(t.Number({ minimum: 0 })),
+    })
+  ),
 });
 
 const UpdateProjectSchema = t.Object({
   name: t.Optional(t.String({ minLength: 1 })),
   rootPath: t.Optional(t.String({ minLength: 1 })),
+  executionOrder: t.Optional(
+    t.Object({
+      serviceIds: t.Array(t.String()),
+      delayMs: t.Optional(t.Number({ minimum: 0 })),
+    })
+  ),
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -83,6 +96,7 @@ export const projectsRouter = new Elysia()
         name: payload.name,
         rootPath: payload.rootPath,
         services: [],
+        executionOrder: payload.executionOrder,
         createdAt: new Date().toISOString(),
       };
       await addProject(project);
@@ -117,20 +131,7 @@ export const projectsRouter = new Elysia()
       set.status = 404;
       return { error: "NOT_FOUND", message: "Project not found" };
     }
-    const settled = await Promise.allSettled(
-      project.services.map((s) =>
-        processManager.start(params.projectId, s, project.rootPath)
-      )
-    );
-    const results: ServiceState[] = settled.map((r, i) => {
-      const svc = project.services[i];
-      if (r.status === "fulfilled") return r.value;
-      return {
-        serviceId: svc?.id ?? "",
-        projectId: params.projectId,
-        status: "error" as const,
-      };
-    });
+    const results = await runOrderedProjectOperation(project, params.projectId, 'start');
     return buildBulkResult(params.projectId, results);
   })
 
@@ -161,20 +162,7 @@ export const projectsRouter = new Elysia()
       set.status = 404;
       return { error: "NOT_FOUND", message: "Project not found" };
     }
-    const settled = await Promise.allSettled(
-      project.services.map((s) =>
-        processManager.restart(params.projectId, s, project.rootPath)
-      )
-    );
-    const results: ServiceState[] = settled.map((r, i) => {
-      const svc = project.services[i];
-      if (r.status === "fulfilled") return r.value;
-      return {
-        serviceId: svc?.id ?? "",
-        projectId: params.projectId,
-        status: "error" as const,
-      };
-    });
+    const results = await runOrderedProjectOperation(project, params.projectId, 'restart');
     return buildBulkResult(params.projectId, results);
   })
 

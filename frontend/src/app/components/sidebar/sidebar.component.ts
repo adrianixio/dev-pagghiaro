@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { ProjectService } from '../../services/project.service';
+import { AppMetadataService } from '../../services/app-metadata.service';
 import { UiService } from '../../services/ui.service';
 
 @Component({
@@ -72,11 +73,21 @@ import { UiService } from '../../services/ui.service';
           <lucide-icon [name]="uiService.darkMode() ? 'sun' : 'moon'" [size]="16"></lucide-icon>
           <span>{{ uiService.darkMode() ? 'Light Mode' : 'Dark Mode' }}</span>
         </button>
+
+        @if (appMetadata.metadata(); as metadata) {
+          <div class="px-3 pt-3 mt-3 border-t border-rustic-200 dark:border-rustic-700 text-[11px] leading-5 text-rustic-500 dark:text-rustic-400 font-sans">
+            <div class="font-medium text-rustic-700 dark:text-rustic-200">v{{ metadata.version }}</div>
+            @if (metadata.author) {
+              <div>by {{ metadata.author }}</div>
+            }
+          </div>
+        }
       </div>
     </aside>
   `,
 })
 export class SidebarComponent {
+  readonly appMetadata = inject(AppMetadataService);
   readonly projectService = inject(ProjectService);
   readonly uiService = inject(UiService);
 }

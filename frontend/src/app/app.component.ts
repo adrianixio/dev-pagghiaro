@@ -30,9 +30,9 @@ import { TerminalService } from './services/terminal.service';
         <app-dashboard></app-dashboard>
         
         @if (terminalService.activeTerminals().length > 0) {
-          <div class="h-64 border-t border-rustic-200 dark:border-rustic-700 flex flex-row overflow-x-auto bg-rustic-900">
+          <div class="h-64 border-t border-rustic-200 dark:border-rustic-700 flex flex-row overflow-x-auto bg-rustic-100 dark:bg-rustic-950 transition-colors duration-300">
             @for (active of terminalService.activeTerminals(); track active.serviceId) {
-              <div class="flex-1 min-w-[400px] border-r border-rustic-700 dark:border-rustic-800 last:border-r-0">
+              <div class="flex-1 min-w-[400px] border-r border-rustic-200 dark:border-rustic-800 last:border-r-0">
                 <app-terminal [active]="active"></app-terminal>
               </div>
             }

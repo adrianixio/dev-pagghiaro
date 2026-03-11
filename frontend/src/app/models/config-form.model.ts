@@ -1,9 +1,11 @@
 export interface EditableServiceDraft {
+  draftKey: string;
   id?: string;
   name: string;
   command: string;
   cwd: string;
   autoStart: boolean;
+  includeInExecution: boolean;
 }
 
 export interface ProjectDraft {
@@ -11,4 +13,5 @@ export interface ProjectDraft {
   name: string;
   rootPath: string;
   services: EditableServiceDraft[];
+  executionDelayMs: number;
 }

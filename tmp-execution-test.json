@@ -1,0 +1,29 @@
+{
+  "version": "1",
+  "projects": [
+    {
+      "id": "proj-test",
+      "name": "Execution Order Test",
+      "rootPath": "C:/Users/adria/Desktop/LAVORO PERSONALE/dev-pagghiaro",
+      "executionOrder": {
+        "serviceIds": ["svc-one", "svc-two"],
+        "delayMs": 1200
+      },
+      "services": [
+        {
+          "id": "svc-one",
+          "name": "first",
+          "command": "bun -e \"await Bun.write('C:/Users/adria/Desktop/LAVORO PERSONALE/dev-pagghiaro/tmp-svc-one.txt', String(Date.now())); setInterval(() => {}, 1000);\"",
+          "cwd": "."
+        },
+        {
+          "id": "svc-two",
+          "name": "second",
+          "command": "bun -e \"await Bun.write('C:/Users/adria/Desktop/LAVORO PERSONALE/dev-pagghiaro/tmp-svc-two.txt', String(Date.now())); setInterval(() => {}, 1000);\"",
+          "cwd": "."
+        }
+      ],
+      "createdAt": "2026-03-11T00:00:00.000Z"
+    }
+  ]
+}

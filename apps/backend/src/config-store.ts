@@ -4,7 +4,7 @@
 
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import type { PagghiaroConfig, ProjectConfig, ServiceConfig } from '@dev-pagghiaro/shared';
+import type { PagghiaroConfig, ProjectConfig, ProjectExecutionOrder, ServiceConfig } from '@dev-pagghiaro/shared';
 
 const DEFAULT_CONFIG: PagghiaroConfig = { version: '1', projects: [] };
 
@@ -54,6 +54,22 @@ function isServiceConfig(value: unknown): value is ServiceConfig {
   );
 }
 
+function isProjectExecutionOrder(value: unknown): value is ProjectExecutionOrder {
+  if (value === undefined) {
+    return true;
+  }
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<ProjectExecutionOrder>;
+  return (
+    Array.isArray(candidate.serviceIds) &&
+    candidate.serviceIds.every((serviceId) => typeof serviceId === 'string') &&
+    (candidate.delayMs === undefined || (typeof candidate.delayMs === 'number' && Number.isFinite(candidate.delayMs) && candidate.delayMs >= 0))
+  );
+}
+
 function isProjectConfig(value: unknown): value is ProjectConfig {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -65,6 +81,7 @@ function isProjectConfig(value: unknown): value is ProjectConfig {
     typeof candidate.name === 'string' &&
     typeof candidate.rootPath === 'string' &&
     typeof candidate.createdAt === 'string' &&
+    isProjectExecutionOrder(candidate.executionOrder) &&
     Array.isArray(candidate.services) &&
     candidate.services.every((service) => isServiceConfig(service))
   );

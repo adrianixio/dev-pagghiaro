@@ -165,6 +165,29 @@ export class ProjectService {
     await this.runBulkOperation(projectId, 'restart-all');
   }
 
+  async updateProjectExecutionOrder(projectId: string, serviceIds: string[], delayMs: number): Promise<void> {
+    await this.updateProject(projectId, {
+      executionOrder: {
+        serviceIds,
+        delayMs,
+      },
+    });
+
+    this.projectsSignal.update((projects) =>
+      projects.map((project) =>
+        project.id !== projectId
+          ? project
+          : {
+              ...project,
+              executionOrder: {
+                serviceIds,
+                delayMs,
+              },
+            }
+      )
+    );
+  }
+
   async saveProjectDraft(draft: ProjectDraft): Promise<void> {
     const services = draft.services
       .map((service) => ({
@@ -175,16 +198,26 @@ export class ProjectService {
       }))
       .filter((service) => service.name && service.command && service.cwd);
 
+    const executionDelayMs = Math.max(0, Math.floor(draft.executionDelayMs || 0));
+
     let projectId = draft.projectId;
     if (projectId) {
       await this.updateProject(projectId, {
         name: draft.name.trim(),
         rootPath: draft.rootPath.trim(),
+        executionOrder: {
+          serviceIds: [],
+          delayMs: executionDelayMs,
+        },
       });
     } else {
       const createdProject = await this.createProject({
         name: draft.name.trim(),
         rootPath: draft.rootPath.trim(),
+        executionOrder: {
+          serviceIds: [],
+          delayMs: executionDelayMs,
+        },
       });
       projectId = createdProject.id;
     }
@@ -192,32 +225,47 @@ export class ProjectService {
     const existingProject = this.getProjectById(projectId);
     const existingServices = new Map((existingProject?.services ?? []).map((service) => [service.id, service]));
     const retainedIds = new Set<string>();
+    const serviceIdByDraftKey = new Map<string, string>();
 
     for (const service of services) {
       if (service.id && existingServices.has(service.id)) {
         retainedIds.add(service.id);
+        serviceIdByDraftKey.set(service.draftKey, service.id);
         await this.updateService(projectId, service.id, {
           name: service.name,
           command: service.command,
           cwd: service.cwd,
           autoStart: service.autoStart,
-        });
-      } else {
-        const createdService = await this.createService(projectId, {
-          name: service.name,
-          command: service.command,
-          cwd: service.cwd,
-          autoStart: service.autoStart,
-        });
-        retainedIds.add(createdService.id);
+          });
+        } else {
+          const createdService = await this.createService(projectId, {
+            name: service.name,
+            command: service.command,
+            cwd: service.cwd,
+            autoStart: service.autoStart,
+          });
+          retainedIds.add(createdService.id);
+          serviceIdByDraftKey.set(service.draftKey, createdService.id);
+        }
       }
-    }
 
     for (const service of existingServices.values()) {
       if (!retainedIds.has(service.id)) {
         await this.deleteService(projectId, service.id);
       }
     }
+
+    const executionServiceIds = services
+      .filter((service) => service.includeInExecution)
+      .map((service) => serviceIdByDraftKey.get(service.draftKey))
+      .filter((serviceId): serviceId is string => Boolean(serviceId));
+
+    await this.updateProject(projectId, {
+      executionOrder: {
+        serviceIds: executionServiceIds,
+        delayMs: executionDelayMs,
+      },
+    });
 
     await this.loadProjects();
     this.setActiveProject(projectId);
@@ -246,6 +294,13 @@ export class ProjectService {
 
   private async runBulkOperation(projectId: string, operation: 'start-all' | 'stop-all' | 'restart-all'): Promise<void> {
     try {
+      const project = this.getProjectById(projectId);
+      if (project && (operation === 'start-all' || operation === 'restart-all')) {
+        for (const service of project.services) {
+          this.updateServiceStatus(projectId, service.id, 'restarting');
+        }
+      }
+
       const response = await fetch(`${API_BASE}/projects/${projectId}/${operation}`, { method: 'POST' });
       if (!response.ok) {
         return;
