@@ -7,7 +7,7 @@
 
 @layer base {
   body {
-    @apply bg-rustic-50 text-rustic-900 font-sans antialiased dark:bg-rustic-900 dark:text-rustic-100 transition-colors duration-300;
+    @apply bg-rustic-50 text-rustic-900 font-sans antialiased dark:bg-rustic-950 dark:text-rustic-100 transition-colors duration-300;
     margin: 0;
     padding: 0;
     height: 100vh;
@@ -29,34 +29,34 @@
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-rustic-100 dark:bg-rustic-800;
+    @apply bg-rustic-100 dark:bg-rustic-950;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-rustic-300 dark:bg-rustic-600 rounded-sm;
+    @apply bg-rustic-300 dark:bg-rustic-700 rounded-sm;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-rustic-400 dark:bg-rustic-500;
+    @apply bg-rustic-400 dark:bg-rustic-600;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-md font-sans text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-rustic-50 dark:focus:ring-offset-rustic-900 shadow-sm;
+    @apply px-4 py-2 rounded-md font-sans text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-rustic-50 dark:focus:ring-offset-rustic-950 shadow-sm;
   }
   .btn-primary {
     @apply bg-country-green text-rustic-50 hover:bg-opacity-90 focus:ring-country-green font-bold;
   }
   .btn-secondary {
-    @apply bg-rustic-100 text-rustic-800 hover:bg-rustic-200 focus:ring-rustic-300 border border-rustic-200 dark:bg-rustic-800 dark:text-rustic-200 dark:hover:bg-rustic-700 dark:focus:ring-rustic-600 dark:border-rustic-700;
+    @apply bg-rustic-100 text-rustic-800 hover:bg-rustic-200 focus:ring-rustic-300 border border-rustic-200 dark:bg-rustic-800 dark:text-rustic-200 dark:hover:bg-rustic-700 dark:focus:ring-rustic-600 dark:border-rustic-600;
   }
   .btn-danger {
     @apply bg-country-red text-white hover:bg-opacity-90 focus:ring-country-red;
   }
   .card {
-    @apply bg-white border border-rustic-200 rounded-lg shadow-md overflow-hidden dark:bg-rustic-800 dark:border-rustic-700;
+    @apply bg-white border border-rustic-200 rounded-lg shadow-md overflow-hidden dark:bg-rustic-800 dark:border-rustic-600;
   }
   .input-field {
-    @apply w-full bg-white border border-rustic-300 rounded-md px-3 py-2 text-rustic-900 font-sans focus:outline-none focus:border-country-green focus:ring-1 focus:ring-country-green transition-colors dark:bg-rustic-800 dark:border-rustic-600 dark:text-rustic-100;
+    @apply w-full bg-white border border-rustic-300 rounded-md px-3 py-2 text-rustic-900 font-sans focus:outline-none focus:border-country-green focus:ring-1 focus:ring-country-green transition-colors dark:bg-rustic-900 dark:border-rustic-700 dark:text-rustic-100;
   }
 
   .xterm {

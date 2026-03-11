@@ -43,24 +43,24 @@ const LIGHT_TERMINAL_THEME = {
 };
 
 const DARK_TERMINAL_THEME = {
-  background: '#1a1412',
+  background: '#120d0c',
   foreground: '#f4e4d8',
-  cursor: '#556b2f',
-  black: '#1a1412',
-  red: '#8b0000',
-  green: '#556b2f',
-  yellow: '#daa520',
-  blue: '#4682b4',
-  magenta: '#d87093',
-  cyan: '#4682b4',
+  cursor: '#7b8f4a',
+  black: '#3f312b',
+  red: '#b85c52',
+  green: '#7b8f4a',
+  yellow: '#cfa14a',
+  blue: '#6c95b0',
+  magenta: '#b98294',
+  cyan: '#6f9e99',
   white: '#f4e4d8',
-  brightBlack: '#6b574b',
-  brightRed: '#a52a2a',
-  brightGreen: '#6b8e23',
-  brightYellow: '#f0e68c',
-  brightBlue: '#5f9ea0',
-  brightMagenta: '#ffb6c1',
-  brightCyan: '#87ceeb',
+  brightBlack: '#5d4a41',
+  brightRed: '#cf786d',
+  brightGreen: '#97ad63',
+  brightYellow: '#e0bc72',
+  brightBlue: '#88afc5',
+  brightMagenta: '#d6a2b3',
+  brightCyan: '#8eb7b1',
   brightWhite: '#faf5f0',
 };
 
@@ -97,7 +97,7 @@ const DARK_TERMINAL_THEME = {
       </div>
 
       <div class="flex-1 relative p-2 transition-colors duration-300"
-           [style.backgroundColor]="uiService.darkMode() ? '#1a1412' : '#f7efe6'">
+           [style.backgroundColor]="uiService.darkMode() ? '#120d0c' : '#f7efe6'">
         <div #terminalContainer class="absolute inset-0 p-2"></div>
       </div>
     </div>
