@@ -1,7 +1,7 @@
 {
-  "name": "dev-pagghiaro",
+  "name": "@adrianixio/dev-pagghiaro",
   "version": "0.1.0",
-  "description": "Local microservice orchestrator with Bun, Elysia, Angular, and xterm.js",
+  "description": "Local microservice orchestrator",
   "license": "MIT",
   "private": false,
   "author": "adrianixio",
