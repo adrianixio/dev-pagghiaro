@@ -189,6 +189,11 @@ import { UiService } from '../../services/ui.service';
 export class ConfigFormComponent {
   readonly projectService = inject(ProjectService);
   readonly uiService = inject(UiService);
+  private autosaveTimer?: ReturnType<typeof setTimeout>;
+  private autosaveInFlight = false;
+  private autosaveQueued = false;
+  private autosaveSuppressed = false;
+  private autosavePromise: Promise<void> | null = null;
 
   projectId?: string;
   projectName = '';
@@ -245,7 +250,7 @@ export class ConfigFormComponent {
 
   drop(event: CdkDragDrop<EditableServiceDraft[]>): void {
     moveItemInArray(this.services, event.previousIndex, event.currentIndex);
-    void this.autoSaveExecutionOrder();
+    this.scheduleAutoSaveExecutionOrder();
   }
 
   executionPreview(): string[] {
@@ -259,7 +264,25 @@ export class ConfigFormComponent {
       return;
     }
 
+    if (this.autosaveTimer) {
+      clearTimeout(this.autosaveTimer);
+      this.autosaveTimer = undefined;
+    }
+    this.autosaveQueued = false;
+    this.autosaveSuppressed = true;
+
+    if (this.autosavePromise) {
+      try {
+        await this.autosavePromise;
+      } catch {
+        // ignore autosave failure and continue with explicit save
+      }
+    }
+
     await this.projectService.saveProjectDraft(this.buildDraft());
+    this.persistedExecutionDelayMs = this.executionDelayMs;
+    this.executionOrderSaveState = 'idle';
+    this.autosaveSuppressed = false;
     this.uiService.closeConfig();
   }
 
@@ -272,6 +295,9 @@ export class ConfigFormComponent {
   }
 
   close(): void {
+    if (this.autosaveTimer) {
+      clearTimeout(this.autosaveTimer);
+    }
     this.uiService.closeConfig();
   }
 
@@ -289,23 +315,62 @@ export class ConfigFormComponent {
     };
   }
 
-  private async autoSaveExecutionOrder(): Promise<void> {
-    if (!this.projectId || !this.canSaveDraft()) {
+  private scheduleAutoSaveExecutionOrder(): void {
+    if (this.autosaveSuppressed) {
       return;
     }
 
+    if (this.autosaveTimer) {
+      clearTimeout(this.autosaveTimer);
+    }
+
     this.executionOrderSaveState = 'saving';
+    this.autosaveTimer = setTimeout(() => {
+      void this.autoSaveExecutionOrder();
+    }, 250);
+  }
+
+  private async autoSaveExecutionOrder(): Promise<void> {
+    if (this.autosaveSuppressed || !this.projectId || !this.canSaveDraft()) {
+      this.executionOrderSaveState = 'idle';
+      return;
+    }
+
+    if (this.autosaveInFlight) {
+      this.autosaveQueued = true;
+      return;
+    }
+
+    this.autosaveInFlight = true;
+    this.autosavePromise = (async () => {
+      this.executionOrderSaveState = 'saving';
+      try {
+        await this.projectService.updateProjectExecutionOrder(
+          this.projectId!,
+          this.services
+            .filter((service) => service.includeInExecution && Boolean(service.id))
+            .map((service) => service.id as string),
+          this.persistedExecutionDelayMs
+        );
+        this.executionOrderSaveState = 'saved';
+      } catch {
+        this.executionOrderSaveState = 'error';
+      } finally {
+        this.autosaveInFlight = false;
+        this.autosavePromise = null;
+        if (this.autosaveQueued && !this.autosaveSuppressed) {
+          this.autosaveQueued = false;
+          this.scheduleAutoSaveExecutionOrder();
+        }
+      }
+    })();
+
     try {
-      await this.projectService.updateProjectExecutionOrder(
-        this.projectId,
-        this.services
-          .filter((service) => service.includeInExecution && Boolean(service.id))
-          .map((service) => service.id as string),
-        this.persistedExecutionDelayMs
-      );
-      this.executionOrderSaveState = 'saved';
-    } catch {
-      this.executionOrderSaveState = 'error';
+      await this.autosavePromise;
+    } finally {
+      if (this.autosaveSuppressed) {
+        this.autosaveQueued = false;
+      }
     }
   }
 }

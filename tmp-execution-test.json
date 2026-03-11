@@ -6,7 +6,10 @@
       "name": "Execution Order Test",
       "rootPath": "C:/Users/adria/Desktop/LAVORO PERSONALE/dev-pagghiaro",
       "executionOrder": {
-        "serviceIds": ["svc-one", "svc-two"],
+        "serviceIds": [
+          "svc-two",
+          "svc-one"
+        ],
         "delayMs": 1200
       },
       "services": [

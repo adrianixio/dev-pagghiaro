@@ -16,7 +16,7 @@ import { LucideAngularModule, Play, Square, Terminal, Activity, RefreshCw } from
          [class.border-rustic-400]="service.status === 'restarting'">
       
       <div class="flex justify-between items-start">
-        <div>
+       <div>
           <h3 class="text-lg font-bold text-rustic-900 dark:text-rustic-100 flex items-center gap-2">
             <span class="w-2 h-2 rounded-full"
                   [class.bg-country-green]="service.status === 'running'"
@@ -26,6 +26,19 @@ import { LucideAngularModule, Play, Square, Terminal, Activity, RefreshCw } from
             </span>
             {{ service.name }}
           </h3>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <span class="rounded-full px-2 py-0.5 text-[11px] font-mono border"
+                  [ngClass]="isInExecutionPlan()
+                    ? 'bg-country-green/15 border-country-green/30 text-country-green'
+                    : 'bg-rustic-100 dark:bg-rustic-700 border-rustic-200 dark:border-rustic-600 text-rustic-500 dark:text-rustic-300'">
+              {{ isInExecutionPlan() ? 'In Plan' : 'Excluded' }}
+            </span>
+            @if (isInExecutionPlan()) {
+              <span class="rounded-full px-2 py-0.5 text-[11px] font-mono border border-country-blue/30 bg-country-blue/10 text-country-blue">
+                #{{ getExecutionIndex() }}
+              </span>
+            }
+          </div>
           <p class="text-xs text-rustic-500 dark:text-rustic-400 font-mono mt-1 truncate" [title]="service.command">
             > {{ service.command }}
           </p>
@@ -103,5 +116,27 @@ export class ServiceCardComponent {
 
   openTerminal() {
     this.terminalService.toggleTerminal(this.projectId, this.service.id, this.service.name);
+  }
+
+  isInExecutionPlan(): boolean {
+    const project = this.projectService.getProjectById(this.projectId);
+    const executionIds = project?.executionOrder?.serviceIds;
+    if (!executionIds) {
+      return true;
+    }
+    return executionIds.includes(this.service.id);
+  }
+
+  getExecutionIndex(): number {
+    const project = this.projectService.getProjectById(this.projectId);
+    const executionIds = project?.executionOrder?.serviceIds;
+    if (!executionIds) {
+      const fallbackIndex = project?.services.findIndex((entry) => entry.id === this.service.id) ?? -1;
+      return fallbackIndex >= 0 ? fallbackIndex + 1 : 0;
+    }
+
+    const validExecutionIds = executionIds.filter((serviceId) => project?.services.some((entry) => entry.id === serviceId));
+    const index = validExecutionIds.indexOf(this.service.id);
+    return index >= 0 ? index + 1 : 0;
   }
 }
