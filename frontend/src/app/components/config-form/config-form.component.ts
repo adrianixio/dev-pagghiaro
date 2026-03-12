@@ -88,10 +88,15 @@ import { UiService } from '../../services/ui.service';
                           <input type="text" [(ngModel)]="service.command" [name]="'serviceCommand' + i"
                                  class="input-field text-sm py-1.5 font-mono" placeholder="e.g. bun run dev">
                         </div>
-                        <div class="md:col-span-2">
+                        <div>
                           <label class="block text-xs font-sans font-medium text-rustic-600 dark:text-rustic-400 mb-1">Working Directory</label>
                           <input type="text" [(ngModel)]="service.cwd" [name]="'serviceCwd' + i"
                                  class="input-field text-sm py-1.5 font-mono" placeholder="e.g. apps/backend">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-sans font-medium text-rustic-600 dark:text-rustic-400 mb-1">Port (Optional)</label>
+                          <input type="number" [(ngModel)]="service.port" [name]="'servicePort' + i"
+                                 class="input-field text-sm py-1.5 font-mono" placeholder="e.g. 3000">
                         </div>
                         <label class="flex items-center gap-2 text-sm text-rustic-700 dark:text-rustic-300 font-sans md:col-span-2">
                           <input type="checkbox" [(ngModel)]="service.autoStart" [name]="'serviceAutoStart' + i"
@@ -228,6 +233,7 @@ export class ConfigFormComponent {
       name: service.name,
       command: service.command,
       cwd: service.cwd,
+      port: service.port ?? null,
       autoStart: Boolean(service.autoStart),
       includeInExecution: executionIds.has(service.id),
     }));
@@ -239,6 +245,7 @@ export class ConfigFormComponent {
       name: '',
       command: '',
       cwd: '.',
+      port: null,
       autoStart: false,
       includeInExecution: true,
     });

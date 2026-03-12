@@ -3,6 +3,7 @@ import {
   BulkOperationResult,
   CreateProjectBody,
   CreateServiceBody,
+  KillPortResult,
   ProjectConfig,
   ServiceMetrics as SharedServiceMetrics,
   ServiceState,
@@ -149,6 +150,21 @@ export class ProjectService {
     await this.runServiceAction(projectId, serviceId, 'restart', 'restarting');
   }
 
+  async killServicePort(projectId: string, serviceId: string): Promise<KillPortResult | null> {
+    try {
+      const response = await fetch(`${API_BASE}/projects/${projectId}/services/${serviceId}/kill-port`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        return null;
+      }
+      return (await response.json()) as KillPortResult;
+    } catch (error) {
+      console.error(`Error killing port process for service ${serviceId}:`, error);
+      return null;
+    }
+  }
+
   async startAllServices(projectId: string): Promise<void> {
     await this.runBulkOperation(projectId, 'start-all');
   }
@@ -235,6 +251,7 @@ export class ProjectService {
           name: service.name,
           command: service.command,
           cwd: service.cwd,
+          port: service.port ?? null,
           autoStart: service.autoStart,
           });
         } else {
@@ -242,6 +259,7 @@ export class ProjectService {
             name: service.name,
             command: service.command,
             cwd: service.cwd,
+            port: service.port ?? null,
             autoStart: service.autoStart,
           });
           retainedIds.add(createdService.id);

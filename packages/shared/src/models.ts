@@ -7,7 +7,7 @@ export interface ServiceConfig {
   cwd: string;
   env?: Record<string, string>;
   autoStart?: boolean;
-  port?: number;
+  port?: number | null;
   color?: string;
 }
 
@@ -74,6 +74,14 @@ export interface AppMetadata {
   name: string;
   version: string;
   author?: string;
+}
+
+export interface KillPortResult {
+  serviceId: string;
+  port: number;
+  pids: number[];
+  killed: number[];
+  failed: Array<{ pid: number; reason: string }>;
 }
 
 export type WsClientMessage =

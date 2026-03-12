@@ -12,6 +12,7 @@ import { spawnPty } from "./pty-adapter";
 import type { PtyHandle, PtySize } from "./pty-adapter";
 import { logBus } from "./log-bus";
 import { metricsCollector } from "./metrics-collector";
+import { killProcessesListeningOnPort } from "./port-processes";
 
 // ─── Internal state ───────────────────────────────────────────────────────────
 
@@ -92,6 +93,24 @@ export const processManager = {
     logBus.emitStatus(service.id, "restarting");
 
     const cwd = resolveCwd(service.cwd, projectRootPath);
+
+    if (service.port != null) {
+      const portCleanup = await killProcessesListeningOnPort(service.port);
+      if (portCleanup.killed.length > 0) {
+        logBus.emit(
+          service.id,
+          `\r\n[DevPagghiaro] Freed port ${service.port} by stopping PID ${portCleanup.killed.join(', ')}\r\n`
+        );
+      }
+      if (portCleanup.failed.length > 0) {
+        logBus.emit(
+          service.id,
+          `\r\n[DevPagghiaro] Could not stop some processes on port ${service.port}: ${portCleanup.failed
+            .map(({ pid, reason }) => `${pid} (${reason})`)
+            .join(', ')}\r\n`
+        );
+      }
+    }
 
     let pty: PtyHandle;
     try {

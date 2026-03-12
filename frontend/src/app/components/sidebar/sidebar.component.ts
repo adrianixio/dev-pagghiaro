@@ -12,8 +12,8 @@ import { UiService } from '../../services/ui.service';
   template: `
     <aside class="w-72 max-w-[80vw] bg-rustic-100 dark:bg-rustic-800 border-r border-rustic-200 dark:border-rustic-700 flex flex-col h-full transition-colors duration-300">
       <div class="p-4 border-b border-rustic-200 dark:border-rustic-700 flex items-center gap-3">
-        <div class="w-9 h-9 bg-country-green rounded-md flex items-center justify-center text-rustic-50 font-bold font-sans">
-          DP
+        <div class="w-11 h-11 rounded-md overflow-hidden flex items-center justify-center">
+          <img src="/logo.png" alt="DevPagghiaro logo" class="w-full h-full object-contain" />
         </div>
         <div>
           <h1 class="text-xl font-bold text-country-green tracking-wider">DevPagghiaro</h1>

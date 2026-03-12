@@ -10,6 +10,7 @@ import {
 } from '../config-store';
 import { logBus } from '../log-bus';
 import { metricsCollector } from '../metrics-collector';
+import { killProcessesListeningOnPort } from '../port-processes';
 import { processManager } from '../process-manager';
 
 const CreateServiceSchema = t.Object({
@@ -18,7 +19,7 @@ const CreateServiceSchema = t.Object({
   cwd: t.String({ minLength: 1 }),
   env: t.Optional(t.Record(t.String(), t.String())),
   autoStart: t.Optional(t.Boolean()),
-  port: t.Optional(t.Number()),
+  port: t.Optional(t.Nullable(t.Number())),
   color: t.Optional(t.String()),
 });
 
@@ -28,7 +29,7 @@ const UpdateServiceSchema = t.Object({
   cwd: t.Optional(t.String({ minLength: 1 })),
   env: t.Optional(t.Record(t.String(), t.String())),
   autoStart: t.Optional(t.Boolean()),
-  port: t.Optional(t.Number()),
+  port: t.Optional(t.Nullable(t.Number())),
   color: t.Optional(t.String()),
 });
 
@@ -60,7 +61,7 @@ export const servicesRouter = new Elysia()
         cwd: payload.cwd,
         ...(payload.env !== undefined ? { env: payload.env } : {}),
         ...(payload.autoStart !== undefined ? { autoStart: payload.autoStart } : {}),
-        ...(payload.port !== undefined ? { port: payload.port } : {}),
+        ...(payload.port != null ? { port: payload.port } : {}),
         ...(payload.color !== undefined ? { color: payload.color } : {}),
       };
 
@@ -112,6 +113,30 @@ export const servicesRouter = new Elysia()
     }
 
     return processManager.restart(params.projectId, service, project.rootPath);
+  })
+  .post(`${BASE}/:serviceId/kill-port`, async ({ params, set }) => {
+    const project = await getProject(params.projectId);
+    if (!project) {
+      set.status = 404;
+      return { error: 'NOT_FOUND', message: 'Project not found' };
+    }
+
+    const service = project.services.find((entry) => entry.id === params.serviceId);
+    if (!service) {
+      set.status = 404;
+      return { error: 'NOT_FOUND', message: 'Service not found' };
+    }
+
+    if (service.port == null) {
+      set.status = 400;
+      return { error: 'BAD_REQUEST', message: 'Service has no configured port' };
+    }
+
+    const outcome = await killProcessesListeningOnPort(service.port);
+    return {
+      serviceId: service.id,
+      ...outcome,
+    };
   })
   .post(`${BASE}/:serviceId/clear-logs`, async ({ params, set }) => {
     const project = await getProject(params.projectId);

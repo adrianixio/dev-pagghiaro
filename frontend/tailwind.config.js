@@ -21,11 +21,11 @@ module.exports = {
           50: '#faf5f0',
         },
         country: {
-          green: '#556b2f',
-          blue: '#4682b4',
-          pink: '#d87093',
-          yellow: '#daa520',
-          red: '#8b0000',
+          green: '#719337',
+          blue: '#4c8cc0ff',
+          pink: '#e6789cff',
+          yellow: '#ebb223ff',
+          red: '#b40303ff',
         }
       },
       fontFamily: {

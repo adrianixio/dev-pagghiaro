@@ -4,6 +4,7 @@ export interface EditableServiceDraft {
   name: string;
   command: string;
   cwd: string;
+  port?: number | null;
   autoStart: boolean;
   includeInExecution: boolean;
 }

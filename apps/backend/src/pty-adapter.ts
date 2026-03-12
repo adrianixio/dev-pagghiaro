@@ -4,8 +4,6 @@
 
 import { spawn as nodeSpawn } from 'node:child_process';
 import type { ChildProcess, SpawnOptions } from 'node:child_process';
-import { statSync } from 'node:fs';
-
 interface BunSpawnOptions extends SpawnOptions {
   pty?: boolean;
 }
@@ -36,8 +34,6 @@ export interface SpawnPtyOptions {
 }
 
 const DEFAULT_SIZE: PtySize = { cols: 220, rows: 50 };
-const GIT_BASH = 'C:\\Program Files\\Git\\bin\\bash.exe';
-
 export function spawnPty(opts: SpawnPtyOptions): PtyHandle {
   const size = opts.initialSize ?? DEFAULT_SIZE;
   const env: NodeJS.ProcessEnv = {
@@ -159,12 +155,8 @@ async function getProcessTty(pid: number): Promise<string | null> {
 
 function resolveShellArgs(command: string): [string, ...string[]] {
   if (process.platform === 'win32') {
-    try {
-      statSync(GIT_BASH);
-      return [GIT_BASH, '--login', '-c', command];
-    } catch {
-      return ['cmd.exe', '/c', command];
-    }
+    const comSpec = process.env['ComSpec']?.trim();
+    return [comSpec && comSpec.length > 0 ? comSpec : 'cmd.exe', '/d', '/s', '/c', command];
   }
 
   return ['/bin/sh', '-c', command];

@@ -50,6 +50,13 @@ import { LucideAngularModule, Play, Square, Terminal, Activity, RefreshCw } from
                     (click)="startService()" title="Start Service">
               <lucide-icon name="play" [size]="16"></lucide-icon>
             </button>
+            @if (service.port != null) {
+              <button class="px-2 rounded-md bg-rustic-100 dark:bg-rustic-700 text-country-red text-xs font-mono hover:bg-rustic-200 dark:hover:bg-rustic-600 transition-colors"
+                      (click)="killPortConflicts()"
+                      [title]="'Kill processi in ascolto sulla porta ' + service.port">
+                Free {{ service.port }}
+              </button>
+            }
           } @else {
             <button class="p-2 rounded-md bg-rustic-100 dark:bg-rustic-700 text-country-yellow hover:bg-rustic-200 dark:hover:bg-rustic-600 transition-colors"
                     (click)="restartService()" title="Restart Service">
@@ -112,6 +119,10 @@ export class ServiceCardComponent {
 
   restartService() {
     this.projectService.restartService(this.projectId, this.service.id);
+  }
+
+  killPortConflicts() {
+    void this.projectService.killServicePort(this.projectId, this.service.id);
   }
 
   openTerminal() {

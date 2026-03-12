@@ -216,6 +216,9 @@ export async function updateService(
   }
 
   const updated: ServiceConfig = { ...existing, ...patch };
+  if (patch.port === null) {
+    delete updated.port;
+  }
   project.services[index] = updated;
   await writeRaw(cfg);
   return updated;
