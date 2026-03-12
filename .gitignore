@@ -6,3 +6,4 @@ bun.lockb
 *.tgz
 pagghiaro.json
 *.txt
+tmp-execution-test.json
