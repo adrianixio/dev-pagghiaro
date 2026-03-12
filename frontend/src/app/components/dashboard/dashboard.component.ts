@@ -9,8 +9,11 @@ import { UiProject } from '../../models/project.model';
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, ServiceCardComponent, LucideAngularModule],
+  host: {
+    class: 'flex min-h-0 flex-1',
+  },
   template: `
-    <div class="flex-1 flex flex-col h-full overflow-y-auto bg-rustic-50 dark:bg-rustic-900 p-6 transition-colors duration-300">
+    <div class="flex min-h-0 flex-1 flex-col overflow-auto bg-rustic-50 p-6 transition-colors duration-300 dark:bg-rustic-900">
       @if (projectService.activeProject(); as project) {
         <div class="mb-8 flex flex-wrap justify-between gap-4 items-end border-b border-rustic-200 dark:border-rustic-700 pb-4">
           <div>
@@ -103,10 +106,12 @@ import { UiProject } from '../../models/project.model';
           </div>
         }
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-          @for (service of projectService.activeServices(); track service.id) {
-            <app-service-card [service]="service" [projectId]="project.id"></app-service-card>
-          }
+        <div class="overflow-x-auto pb-2">
+          <div class="grid min-w-[20rem] grid-cols-1 gap-6 md:min-w-0 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            @for (service of projectService.activeServices(); track service.id) {
+              <app-service-card [service]="service" [projectId]="project.id"></app-service-card>
+            }
+          </div>
         </div>
       } @else {
         <div class="flex-1 flex items-center justify-center flex-col text-rustic-400 dark:text-rustic-500">

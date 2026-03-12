@@ -7,13 +7,18 @@ export class UiService {
   private readonly configOpenSignal = signal(false);
   private readonly editingProjectIdSignal = signal<string | null>(null);
   private readonly darkModeSignal = signal<boolean>(this.getInitialDarkMode());
+  private readonly sidebarOpenSignal = signal(false);
+  private readonly isMobileSignal = signal(this.getInitialIsMobile());
 
   readonly configOpen = this.configOpenSignal.asReadonly();
   readonly editingProjectId = this.editingProjectIdSignal.asReadonly();
   readonly darkMode = this.darkModeSignal.asReadonly();
+  readonly sidebarOpen = this.sidebarOpenSignal.asReadonly();
+  readonly isMobile = this.isMobileSignal.asReadonly();
 
   constructor() {
     this.applyTheme(this.darkModeSignal());
+    this.bindViewportState();
   }
 
   private getInitialDarkMode(): boolean {
@@ -25,6 +30,25 @@ export class UiService {
       return stored === 'dark';
     }
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  private getInitialIsMobile(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.matchMedia('(max-width: 767.98px)').matches;
+  }
+
+  private bindViewportState(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 767.98px)');
+    this.isMobileSignal.set(mediaQuery.matches);
+    mediaQuery.addEventListener('change', (event) => {
+      this.isMobileSignal.set(event.matches);
+    });
   }
 
   toggleDarkMode(): void {
@@ -52,9 +76,22 @@ export class UiService {
 
   openNewProject(): void {
     this.openConfig(null);
+    this.closeSidebar();
   }
 
   closeConfig(): void {
     this.configOpenSignal.set(false);
+  }
+
+  openSidebar(): void {
+    this.sidebarOpenSignal.set(true);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpenSignal.set(false);
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpenSignal.update((isOpen) => !isOpen);
   }
 }
