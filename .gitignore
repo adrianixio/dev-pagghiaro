@@ -3,3 +3,5 @@ dist/
 .env
 *.log
 bun.lockb
+*.tgz
+pagghiaro.json
