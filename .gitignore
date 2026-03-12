@@ -5,3 +5,4 @@ dist/
 bun.lockb
 *.tgz
 pagghiaro.json
+*.txt
