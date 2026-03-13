@@ -9,7 +9,7 @@ import { projectsRouter } from './routes/projects';
 import { servicesRouter } from './routes/services';
 import { wsLogsRouter } from './routes/ws-logs';
 
-const PORT = Number(process.env['PORT'] ?? 3001);
+const PORT = Number(process.env['PAGGHIARO_PORT'] ?? 3001);
 const STATIC_DIR = resolveStaticDir();
 
 const app = new Elysia()

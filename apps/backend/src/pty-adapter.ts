@@ -34,11 +34,13 @@ export interface SpawnPtyOptions {
 }
 
 const DEFAULT_SIZE: PtySize = { cols: 220, rows: 50 };
+const RESERVED_CHILD_ENV_PREFIXES = ['PAGGHIARO_'];
+
 export function spawnPty(opts: SpawnPtyOptions): PtyHandle {
   const size = opts.initialSize ?? DEFAULT_SIZE;
   const env: NodeJS.ProcessEnv = {
-    ...process.env,
-    ...(opts.env ?? {}),
+    ...filterReservedEnv(process.env),
+    ...filterReservedEnv(opts.env ?? {}),
     TERM: 'xterm-256color',
     COLORTERM: 'truecolor',
     FORCE_COLOR: '1',
@@ -105,6 +107,20 @@ export function spawnPty(opts: SpawnPtyOptions): PtyHandle {
       listeners.push(fn);
     },
   };
+}
+
+function filterReservedEnv(env: Record<string, string | undefined>): NodeJS.ProcessEnv {
+  const filtered: NodeJS.ProcessEnv = {};
+
+  for (const [key, value] of Object.entries(env)) {
+    if (RESERVED_CHILD_ENV_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+      continue;
+    }
+
+    filtered[key] = value;
+  }
+
+  return filtered;
 }
 
 async function applyUnixResize(pid: number, size: PtySize): Promise<void> {

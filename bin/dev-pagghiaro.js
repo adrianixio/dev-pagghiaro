@@ -25,7 +25,7 @@ if (!existsSync(staticDir)) {
 const configPath = options.config ?? join(process.cwd(), 'pagghiaro.json');
 const port = String(options.port ?? 3001);
 
-process.env['PORT'] = port;
+process.env['PAGGHIARO_PORT'] = port;
 process.env['PAGGHIARO_CONFIG_PATH'] = configPath;
 process.env['PAGGHIARO_STATIC_DIR'] = staticDir;
 
