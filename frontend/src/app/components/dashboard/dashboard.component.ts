@@ -40,6 +40,12 @@ import { UiProject } from '../../models/project.model';
               <lucide-icon name="square" [size]="16"></lucide-icon>
               Stop All
             </button>
+            <button class="btn btn-secondary flex items-center gap-2 text-country-blue hover:text-opacity-80"
+                    (click)="projectService.reloadProjectContext(project.id)"
+                    title="Reload project env and restart active services">
+              <lucide-icon name="rotate-cw" [size]="16"></lucide-icon>
+              Reload Context
+            </button>
 
             <div class="bg-white dark:bg-rustic-800 border border-rustic-200 dark:border-rustic-700 rounded-md px-4 py-2 flex items-center gap-3 shadow-sm transition-colors duration-300">
               <lucide-icon name="server" [size]="18" class="text-country-blue"></lucide-icon>

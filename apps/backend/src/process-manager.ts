@@ -13,6 +13,7 @@ import type { PtyHandle, PtySize } from "./pty-adapter";
 import { logBus } from "./log-bus";
 import { metricsCollector } from "./metrics-collector";
 import { killProcessesListeningOnPort } from "./port-processes";
+import { buildServiceProcessContext } from "./process-context";
 
 // ─── Internal state ───────────────────────────────────────────────────────────
 
@@ -114,10 +115,11 @@ export const processManager = {
 
     let pty: PtyHandle;
     try {
+      const processContext = await buildServiceProcessContext(projectRootPath, service);
       pty = spawnPty({
         command: service.command,
         cwd,
-        env: service.env,
+        env: processContext,
         initialSize,
       });
     } catch (err) {

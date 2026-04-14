@@ -74,6 +74,36 @@ import { TerminalService } from './services/terminal.service';
       @if (uiService.configOpen()) {
         <app-config-form></app-config-form>
       }
+      @if (uiService.toast(); as toast) {
+        <div class="pointer-events-none fixed inset-x-3 top-3 z-[70] flex justify-center sm:inset-x-auto sm:right-4 sm:top-4">
+          <div
+            class="pointer-events-auto w-full max-w-sm rounded-xl border px-4 py-3 shadow-xl backdrop-blur-sm transition-all duration-300"
+            [ngClass]="toast.tone === 'success'
+              ? 'border-country-green/30 bg-country-green/12 text-country-green'
+              : 'border-country-red/30 bg-country-red/12 text-country-red'"
+          >
+            <div class="flex items-start gap-3">
+              <div
+                class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                [class.bg-country-green]="toast.tone === 'success'"
+                [class.bg-country-red]="toast.tone === 'error'"
+              ></div>
+              <div class="min-w-0 flex-1">
+                <div class="text-sm font-bold tracking-[0.08em] uppercase">{{ toast.title }}</div>
+                <div class="mt-1 text-sm text-rustic-700 dark:text-rustic-200">{{ toast.message }}</div>
+              </div>
+              <button
+                type="button"
+                class="rounded-md border border-rustic-300/70 bg-white/70 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-rustic-500 transition-colors hover:bg-white dark:border-rustic-600 dark:bg-rustic-900/70 dark:text-rustic-300 dark:hover:bg-rustic-900"
+                (click)="uiService.dismissToast()"
+                aria-label="Dismiss notification"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
 })

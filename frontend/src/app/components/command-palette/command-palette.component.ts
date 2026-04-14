@@ -191,6 +191,13 @@ export class CommandPaletteComponent {
           action: () => void this.projectService.stopAllServices(activeProject.id),
         },
         {
+          id: `project:reload-context:${activeProject.id}`,
+          title: 'Reload Process Context',
+          description: `Reload env files and restart active services in ${activeProject.name}`,
+          icon: 'rotate-cw',
+          action: () => void this.projectService.reloadProjectContext(activeProject.id),
+        },
+        {
           id: `project:edit:${activeProject.id}`,
           title: `Edit Project: ${activeProject.name}`,
           description: 'Open the configuration form for this project',

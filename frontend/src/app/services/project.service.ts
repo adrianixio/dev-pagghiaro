@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import {
   BulkOperationResult,
   CreateProjectBody,
@@ -12,8 +12,16 @@ import {
 } from '@dev-pagghiaro/shared';
 import { ProjectDraft } from '../models/config-form.model';
 import { ServiceMetrics, ServiceStatus, UiProject } from '../models/project.model';
+import { UiService } from './ui.service';
 
 const API_BASE = '/api';
+
+interface ReloadProjectContextResult {
+  projectId: string;
+  reloadedAt: string;
+  restartedServiceIds: string[];
+  runningServices: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +29,7 @@ const API_BASE = '/api';
 export class ProjectService {
   private readonly projectsSignal = signal<UiProject[]>([]);
   private readonly activeProjectIdSignal = signal<string | null>(null);
+  private readonly uiService = inject(UiService);
 
   readonly projects = this.projectsSignal.asReadonly();
   readonly activeProjectId = this.activeProjectIdSignal.asReadonly();
@@ -179,6 +188,52 @@ export class ProjectService {
 
   async restartAllServices(projectId: string): Promise<void> {
     await this.runBulkOperation(projectId, 'restart-all');
+  }
+
+  async reloadProjectContext(projectId: string): Promise<void> {
+    try {
+      const project = this.getProjectById(projectId);
+      if (project) {
+        for (const service of project.services) {
+          if (service.status === 'running' || service.status === 'restarting') {
+            this.updateServiceStatus(projectId, service.id, 'restarting');
+          }
+        }
+      }
+
+      const response = await fetch(`${API_BASE}/projects/${projectId}/reload-context`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        if (project) {
+          await Promise.all(project.services.map((service) => this.fetchServiceState(projectId, service.id)));
+        }
+        this.uiService.showToast('Reload failed', 'Could not refresh the project context.', 'error');
+        return;
+      }
+
+      const result = (await response.json()) as ReloadProjectContextResult;
+
+      if (project) {
+        await Promise.all(project.services.map((service) => this.fetchServiceState(projectId, service.id)));
+      }
+
+      const restartedCount = result.runningServices ?? result.restartedServiceIds.length;
+      const projectName = project?.name ?? 'the project';
+      this.uiService.showToast(
+        'Context reloaded',
+        restartedCount === 1
+          ? `Reloaded env files for ${projectName} and restarted 1 active service.`
+          : `Reloaded env files for ${projectName} and restarted ${restartedCount} active services.`
+      );
+    } catch (error) {
+      console.error(`Error reloading process context for project ${projectId}:`, error);
+      const project = this.getProjectById(projectId);
+      if (project) {
+        await Promise.all(project.services.map((service) => this.fetchServiceState(projectId, service.id)));
+      }
+      this.uiService.showToast('Reload failed', 'Could not refresh the project context.', 'error');
+    }
   }
 
   async updateProjectExecutionOrder(projectId: string, serviceIds: string[], delayMs: number): Promise<void> {

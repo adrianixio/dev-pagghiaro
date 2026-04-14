@@ -35,6 +35,7 @@ import {
   updateProject,
 } from "../config-store";
 import { processManager } from "../process-manager";
+import { reloadProjectProcessContext } from "../process-context";
 import { runOrderedProjectOperation } from "../project-execution";
 
 // ─── Validation schemas ───────────────────────────────────────────────────────
@@ -164,6 +165,34 @@ export const projectsRouter = new Elysia()
     }
     const results = await runOrderedProjectOperation(project, params.projectId, 'restart');
     return buildBulkResult(params.projectId, results);
+  })
+
+  .post("/api/projects/:projectId/reload-context", async ({ params, set }) => {
+    const project = await getProject(params.projectId);
+    if (!project) {
+      set.status = 404;
+      return { error: "NOT_FOUND", message: "Project not found" };
+    }
+
+    await reloadProjectProcessContext(project);
+
+    const activeServices = project.services.filter((service) => {
+      const status = processManager.getState(service.id)?.status;
+      return status === 'running' || status === 'restarting';
+    });
+
+    const results = await Promise.all(
+      activeServices.map((service) =>
+        processManager.restart(params.projectId, service, project.rootPath)
+      )
+    );
+
+    return {
+      projectId: params.projectId,
+      reloadedAt: new Date().toISOString(),
+      restartedServiceIds: results.map((result) => result.serviceId),
+      runningServices: results.length,
+    };
   })
 
   // ── Single project CRUD (registered after sub-resource routes) ──────────────

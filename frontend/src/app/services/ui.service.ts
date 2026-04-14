@@ -1,5 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 
+export interface UiToast {
+  id: number;
+  title: string;
+  message: string;
+  tone: 'success' | 'error';
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -9,12 +16,15 @@ export class UiService {
   private readonly darkModeSignal = signal<boolean>(this.getInitialDarkMode());
   private readonly sidebarOpenSignal = signal(false);
   private readonly isMobileSignal = signal(this.getInitialIsMobile());
+  private readonly toastSignal = signal<UiToast | null>(null);
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly configOpen = this.configOpenSignal.asReadonly();
   readonly editingProjectId = this.editingProjectIdSignal.asReadonly();
   readonly darkMode = this.darkModeSignal.asReadonly();
   readonly sidebarOpen = this.sidebarOpenSignal.asReadonly();
   readonly isMobile = this.isMobileSignal.asReadonly();
+  readonly toast = this.toastSignal.asReadonly();
 
   constructor() {
     this.applyTheme(this.darkModeSignal());
@@ -93,5 +103,31 @@ export class UiService {
 
   toggleSidebar(): void {
     this.sidebarOpenSignal.update((isOpen) => !isOpen);
+  }
+
+  showToast(title: string, message: string, tone: UiToast['tone'] = 'success'): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+
+    this.toastSignal.set({
+      id: Date.now(),
+      title,
+      message,
+      tone,
+    });
+
+    this.toastTimer = setTimeout(() => {
+      this.dismissToast();
+    }, 3800);
+  }
+
+  dismissToast(): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+
+    this.toastSignal.set(null);
   }
 }
