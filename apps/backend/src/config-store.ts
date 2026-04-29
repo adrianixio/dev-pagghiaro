@@ -4,12 +4,12 @@
 
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import type { PagghiaroConfig, ProjectConfig, ProjectExecutionOrder, ServiceConfig } from '@dev-pagghiaro/shared';
+import type { DebugWatch, PagghiaroConfig, ProjectConfig, ProjectExecutionOrder, ServiceConfig } from '@dev-pagghiaro/shared';
 
 const DEFAULT_CONFIG: PagghiaroConfig = { version: '1', projects: [] };
 
 function resolveConfigPath(): string {
-  const envPath = process.env['PAGGHIARO_CONFIG_PATH'];
+  const envPath = process.env.PAGGHIARO_CONFIG_PATH;
   if (envPath) {
     return resolve(envPath);
   }
@@ -21,7 +21,7 @@ function resolveConfigPath(): string {
   ];
 
   const existing = candidates.find((candidate) => existsSync(candidate));
-  return existing ?? candidates[0]!;
+  return existing ?? candidates[0] ?? join(process.cwd(), 'pagghiaro.json');
 }
 
 const CONFIG_PATH = resolveConfigPath();
@@ -34,6 +34,26 @@ function isStringRecord(value: unknown): value is Record<string, string> {
     return false;
   }
   return Object.values(value).every((entry) => typeof entry === 'string');
+}
+
+function isDebugWatch(value: unknown): value is DebugWatch {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<DebugWatch>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.serviceId === 'string' &&
+    typeof candidate.expr === 'string' &&
+    candidate.mode === 'interval' &&
+    typeof candidate.intervalMs === 'number' &&
+    Number.isFinite(candidate.intervalMs) &&
+    typeof candidate.bufferSize === 'number' &&
+    Number.isFinite(candidate.bufferSize) &&
+    typeof candidate.createdAt === 'number' &&
+    Number.isFinite(candidate.createdAt)
+  );
 }
 
 function isServiceConfig(value: unknown): value is ServiceConfig {
@@ -50,7 +70,10 @@ function isServiceConfig(value: unknown): value is ServiceConfig {
     isStringRecord(candidate.env) &&
     (candidate.autoStart === undefined || typeof candidate.autoStart === 'boolean') &&
     (candidate.port === undefined || typeof candidate.port === 'number') &&
-    (candidate.color === undefined || typeof candidate.color === 'string')
+    (candidate.color === undefined || typeof candidate.color === 'string') &&
+    (candidate.debug === undefined || typeof candidate.debug === 'boolean') &&
+    (candidate.persistDebugWatches === undefined || typeof candidate.persistDebugWatches === 'boolean') &&
+    (candidate.debugWatches === undefined || (Array.isArray(candidate.debugWatches) && candidate.debugWatches.every((watch) => isDebugWatch(watch))))
   );
 }
 
@@ -106,7 +129,7 @@ async function readRaw(): Promise<PagghiaroConfig> {
   const file = Bun.file(CONFIG_PATH);
   const exists = await file.exists();
   if (!exists) {
-    await Bun.write(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 2) + '\n');
+    await Bun.write(CONFIG_PATH, `${JSON.stringify(DEFAULT_CONFIG, null, 2)}\n`);
     return structuredClone(DEFAULT_CONFIG);
   }
 
@@ -123,7 +146,7 @@ async function readRaw(): Promise<PagghiaroConfig> {
 }
 
 async function writeRaw(config: PagghiaroConfig): Promise<void> {
-  await Bun.write(CONFIG_PATH, JSON.stringify(config, null, 2) + '\n');
+  await Bun.write(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`);
 }
 
 export async function getConfig(): Promise<PagghiaroConfig> {
@@ -181,6 +204,19 @@ export async function removeProject(id: string): Promise<boolean> {
 export async function getService(projectId: string, serviceId: string): Promise<ServiceConfig | undefined> {
   const project = await getProject(projectId);
   return project?.services.find((service) => service.id === serviceId);
+}
+
+export async function findServiceById(
+  serviceId: string
+): Promise<{ projectId: string; service: ServiceConfig } | undefined> {
+  const cfg = await readRaw();
+  for (const project of cfg.projects) {
+    const service = project.services.find((entry) => entry.id === serviceId);
+    if (service) {
+      return { projectId: project.id, service };
+    }
+  }
+  return undefined;
 }
 
 export async function addService(projectId: string, service: ServiceConfig): Promise<ServiceConfig | undefined> {

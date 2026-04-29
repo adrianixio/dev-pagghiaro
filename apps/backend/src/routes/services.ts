@@ -1,6 +1,7 @@
-import { randomUUID } from 'node:crypto';
-import { Elysia, t } from 'elysia';
 import type { CreateServiceBody, UpdateServiceBody } from '@dev-pagghiaro/shared';
+import { Elysia, t } from 'elysia';
+import { randomUUID } from 'node:crypto';
+import { watchRegistry } from '../debug/watch-registry';
 import {
   addService,
   getProject,
@@ -21,6 +22,8 @@ const CreateServiceSchema = t.Object({
   autoStart: t.Optional(t.Boolean()),
   port: t.Optional(t.Nullable(t.Number())),
   color: t.Optional(t.String()),
+  debug: t.Optional(t.Boolean()),
+  persistDebugWatches: t.Optional(t.Boolean()),
 });
 
 const UpdateServiceSchema = t.Object({
@@ -31,6 +34,8 @@ const UpdateServiceSchema = t.Object({
   autoStart: t.Optional(t.Boolean()),
   port: t.Optional(t.Nullable(t.Number())),
   color: t.Optional(t.String()),
+  debug: t.Optional(t.Boolean()),
+  persistDebugWatches: t.Optional(t.Boolean()),
 });
 
 const BASE = '/api/projects/:projectId/services';
@@ -63,6 +68,10 @@ export const servicesRouter = new Elysia()
         ...(payload.autoStart !== undefined ? { autoStart: payload.autoStart } : {}),
         ...(payload.port != null ? { port: payload.port } : {}),
         ...(payload.color !== undefined ? { color: payload.color } : {}),
+        ...(payload.debug !== undefined ? { debug: payload.debug } : {}),
+        ...(payload.persistDebugWatches !== undefined
+          ? { persistDebugWatches: payload.persistDebugWatches }
+          : {}),
       };
 
       const created = await addService(params.projectId, service);
@@ -140,7 +149,7 @@ export const servicesRouter = new Elysia()
   })
   .post(`${BASE}/:serviceId/clear-logs`, async ({ params, set }) => {
     const project = await getProject(params.projectId);
-    if (!project || !project.services.some((service) => service.id === params.serviceId)) {
+    if (!project?.services.some((service) => service.id === params.serviceId)) {
       set.status = 404;
       return { error: 'NOT_FOUND', message: 'Service not found' };
     }
@@ -177,7 +186,13 @@ export const servicesRouter = new Elysia()
     `${BASE}/:serviceId`,
     async ({ params, body, set }) => {
       const patch = body as UpdateServiceBody;
-      const updated = await updateService(params.projectId, params.serviceId, patch);
+      const nextPatch: UpdateServiceBody = {
+        ...patch,
+        ...(patch.persistDebugWatches === true
+          ? { debugWatches: watchRegistry.listWatches(params.serviceId) }
+          : {}),
+      };
+      const updated = await updateService(params.projectId, params.serviceId, nextPatch);
       if (!updated) {
         set.status = 404;
         return { error: 'NOT_FOUND', message: 'Service not found' };
