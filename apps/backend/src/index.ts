@@ -4,6 +4,7 @@ import { Elysia } from 'elysia';
 import { getProjects } from './config-store';
 import { metricsCollector } from './metrics-collector';
 import { processManager } from './process-manager';
+import { gracefulShutdown } from './shutdown';
 import { autoStartProjectServices } from './project-execution';
 import { projectsRouter } from './routes/projects';
 import { servicesRouter } from './routes/services';
@@ -63,8 +64,7 @@ void (async () => {
 
 async function shutdown(signal: string): Promise<void> {
   console.log(`\n[DevPagghiaro] Received ${signal} - shutting down...`);
-  metricsCollector.stopAll();
-  await processManager.stopAll();
+  await gracefulShutdown();
   console.log('[DevPagghiaro] All child processes stopped. Bye.');
   process.exit(0);
 }
