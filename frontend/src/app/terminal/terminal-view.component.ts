@@ -118,5 +118,6 @@ export class TerminalViewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.pending = [];
     this.resizeObserver = new ResizeObserver(() => this.refit());
     this.resizeObserver.observe(this.host.nativeElement);
+    this.xterm.focus();
   }
 }

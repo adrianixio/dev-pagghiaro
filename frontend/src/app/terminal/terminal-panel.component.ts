@@ -35,8 +35,8 @@ import { ServiceStatus } from '../models/project.model';
           </div>
         </div>
         <div class="flex min-h-0 flex-1">
-          @for (t of visibleTerminals(); track t.serviceId) {
-            <div class="min-w-0 flex-1 border-r border-rustic-800 last:border-r-0">
+          @for (t of mgr.dockedTerminals(); track t.serviceId) {
+            <div class="min-w-0 flex-1 border-r border-rustic-800 last:border-r-0" [class.hidden]="!isVisible(t.serviceId)">
               <app-terminal-view [terminal]="t"></app-terminal-view>
             </div>
           }
@@ -51,12 +51,11 @@ export class TerminalPanelComponent {
   private readonly projectService = inject(ProjectService);
   maximized = false;
 
-  visibleTerminals() {
+  isVisible(serviceId: string): boolean {
     const split = this.mgr.splitIds();
-    const docked = this.mgr.dockedTerminals();
-    if (split.length > 0) return docked.filter((t) => split.includes(t.serviceId));
-    const active = docked.find((t) => t.serviceId === this.mgr.activeId());
-    return active ? [active] : docked.slice(0, 1);
+    if (split.length > 0) return split.includes(serviceId);
+    const active = this.mgr.activeId() ?? this.mgr.dockedTerminals()[0]?.serviceId;
+    return serviceId === active;
   }
 
   statusOf(serviceId: string): ServiceStatus {

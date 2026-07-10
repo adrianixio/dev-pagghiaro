@@ -72,6 +72,7 @@ export class AppShellComponent {
         openTerminal: (p, s, name) => this.mgr.open(p, s, name),
         toggleDarkMode: () => this.ui.toggleDarkMode(),
         openNewProject: () => this.ui.openNewProject(),
+        openConfig: (id) => this.ui.openConfig(id),
       });
       this.palette.clearCommands();
       this.palette.registerCommands(cmds);

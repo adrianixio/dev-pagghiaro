@@ -1,0 +1,89 @@
+<h2>Due sapori di "rustico raffinato"</h2>
+<p class="subtitle">Stessa struttura (layout A), estetica diversa. Guarda palette, titoli, densità e il chrome del terminale. Clicca quella che senti più tua.</p>
+
+<style>
+  .sb{border:1px solid rgba(140,115,100,.4);border-radius:12px;overflow:hidden}
+  .sb .hd{padding:10px 14px;font-weight:700}
+  .sb .pane{padding:14px;display:flex;flex-direction:column;gap:12px}
+  .sw{display:flex;gap:6px}
+  .sw span{width:30px;height:30px;border-radius:7px;border:1px solid rgba(0,0,0,.08)}
+  .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.14em;opacity:.6}
+  .row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .spark{width:56px;height:15px;border-radius:3px}
+  .btn{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid transparent}
+  .term{border-radius:9px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:11px}
+  .ttabs{display:flex;gap:3px;padding:6px 8px 0}
+  .tt{padding:5px 12px;border-radius:7px 7px 0 0}
+  .tbody{padding:10px 12px;line-height:1.6}
+
+  /* Variation 1 — Casale */
+  .v1{background:#faf5f0;color:#1a1412}
+  .v1 .hd{background:#f4e4d8;border-bottom:1px solid #e6ccb8;font-family:'Bitter',Georgia,serif}
+  .v1 .display{font-family:'Bitter',Georgia,serif;font-size:26px;font-weight:700;color:#5c7a2c}
+  .v1 .muted{color:#8c7364}
+  .v1 .card{background:#fff;border:1px solid #e6ccb8;box-shadow:0 1px 2px rgba(63,49,43,.06)}
+  .v1 .btn-p{background:#719337;color:#fff}
+  .v1 .btn-s{background:#fff;border-color:#e6ccb8;color:#5d4a41}
+  .v1 .spark{background:linear-gradient(90deg,#71933733,#71933799)}
+  .v1 .term{background:#1a1412;color:#cead98}
+  .v1 .ttabs{background:#120d0c}
+  .v1 .tt{background:#261d19;color:#ad907e}
+  .v1 .tt.on{background:#1a1412;color:#f4e4d8}
+
+  /* Variation 2 — Officina */
+  .v2{background:#f6f1ea;color:#221a15}
+  .v2 .hd{background:#efe6da;border-bottom:1px solid #d9c9b6;font-family:'Source Sans 3',sans-serif;letter-spacing:.02em}
+  .v2 .display{font-family:'Source Sans 3',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.01em;color:#4f6b25}
+  .v2 .muted{color:#7a6b5d}
+  .v2 .card{background:#fffdfb;border:1px solid #d9c9b6;border-radius:6px}
+  .v2 .btn{border-radius:6px}
+  .v2 .btn-p{background:#5f7d2e;color:#fff}
+  .v2 .btn-s{background:transparent;border-color:#c9a37f;color:#8a4b25}
+  .v2 .spark{background:linear-gradient(90deg,#b4632a33,#b4632aaa)}
+  .v2 .term{background:#120d0c;color:#d8b48f;border-radius:6px}
+  .v2 .ttabs{background:#0b0908}
+  .v2 .tt{background:#1f1712;color:#a98b74;border-radius:5px 5px 0 0}
+  .v2 .tt.on{background:#120d0c;color:#f0d9c4}
+  .v2 .row{border:1px solid transparent}
+</style>
+
+<div class="split">
+  <div class="option" data-choice="casale" onclick="toggleSelect(this)" style="padding:0">
+   <div class="sb v1">
+    <div class="hd">Variante 1 · “Casale” — caldo e calmo</div>
+    <div class="pane">
+      <div class="display">api-gateway</div>
+      <div class="muted" style="font-size:12px;margin-top:-6px">Toni crema, verde oliva, titoli serif (Bitter). Arioso, artigianale.</div>
+      <div class="lbl">Palette</div>
+      <div class="sw"><span style="background:#faf5f0"></span><span style="background:#e6ccb8"></span><span style="background:#8c7364"></span><span style="background:#719337"></span><span style="background:#b40303"></span><span style="background:#1a1412"></span></div>
+      <div class="lbl">Riga servizio</div>
+      <div class="row card"><span class="dot" style="background:#719337"></span><b>api-gateway</b><span class="muted" style="font-size:11px">:3000</span><span style="flex:1"></span><span class="spark"></span><span class="btn btn-s">···</span></div>
+      <div class="lbl">Azioni</div>
+      <div style="display:flex;gap:8px"><span class="btn btn-p">Start all</span><span class="btn btn-s">Stop all</span></div>
+      <div class="lbl">Terminale</div>
+      <div class="term"><div class="ttabs"><span class="tt on">api-gateway</span><span class="tt">web-app</span></div><div class="tbody">$ listening on :3000<br>› ready in 812ms</div></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="option" data-choice="officina" onclick="toggleSelect(this)" style="padding:0">
+   <div class="sb v2">
+    <div class="hd">Variante 2 · “Officina” — nitido e denso</div>
+    <div class="pane">
+      <div class="display">api-gateway</div>
+      <div class="muted" style="font-size:12px;margin-top:-6px">Neutri caldi, verde profondo + accento terracotta, tutto sans, più denso e tecnico.</div>
+      <div class="lbl">Palette</div>
+      <div class="sw"><span style="background:#f6f1ea"></span><span style="background:#d9c9b6"></span><span style="background:#7a6b5d"></span><span style="background:#5f7d2e"></span><span style="background:#b4632a"></span><span style="background:#120d0c"></span></div>
+      <div class="lbl">Riga servizio</div>
+      <div class="row card"><span class="dot" style="background:#5f7d2e"></span><b>api-gateway</b><span class="muted" style="font-size:11px">:3000</span><span style="flex:1"></span><span class="spark"></span><span class="btn btn-s">···</span></div>
+      <div class="lbl">Azioni</div>
+      <div style="display:flex;gap:8px"><span class="btn btn-p">Start all</span><span class="btn btn-s">Stop all</span></div>
+      <div class="lbl">Terminale</div>
+      <div class="term"><div class="ttabs"><span class="tt on">api-gateway</span><span class="tt">web-app</span></div><div class="tbody">$ listening on :3000<br>› ready in 812ms</div></div>
+    </div>
+   </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:18px">Nota: entrambe supportano dark mode. Puoi anche dirmi "mix" (es. densità di Officina + serif di Casale).</p>

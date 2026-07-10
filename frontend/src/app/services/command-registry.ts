@@ -16,12 +16,14 @@ export interface CommandDeps {
   openTerminal: (p: string, s: string, name: string) => void;
   toggleDarkMode: () => void;
   openNewProject: () => void;
+  openConfig: (projectId: string) => void;
 }
 
 export function buildCommands(d: CommandDeps): Command[] {
   const cmds: Command[] = [];
   for (const project of d.projects()) {
     cmds.push({ id: `switch:${project.id}`, title: `Switch to ${project.name}`, icon: 'folder', action: () => d.setActiveProject(project.id) });
+    cmds.push({ id: `edit:${project.id}`, title: `Edit ${project.name} settings`, icon: 'settings', action: () => d.openConfig(project.id) });
   }
   const active = d.activeProject();
   if (active) {

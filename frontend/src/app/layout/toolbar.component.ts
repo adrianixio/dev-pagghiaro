@@ -29,6 +29,7 @@ import { UiIconButtonComponent } from '../ui/ui-icon-button.component';
           <ui-button variant="secondary" size="sm" (click)="projectService.restartAllServices(project.id)"><lucide-icon name="refresh-cw" [size]="14"></lucide-icon>Restart</ui-button>
           <ui-button variant="secondary" size="sm" (click)="projectService.stopAllServices(project.id)"><lucide-icon name="square" [size]="14"></lucide-icon>Stop all</ui-button>
           <ui-button variant="ghost" size="sm" (click)="projectService.reloadProjectContext(project.id)"><lucide-icon name="rotate-cw" [size]="14"></lucide-icon>Reload</ui-button>
+          <ui-icon-button icon="settings" label="Project settings" (click)="ui.openConfig(project.id)"></ui-icon-button>
         </div>
       </div>
     }

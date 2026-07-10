@@ -1,0 +1,116 @@
+<h2>Tre direzioni di layout per DevPagghiaro</h2>
+<p class="subtitle">Estetica "rustico raffinato" · terminali ibridi (tab + split + flottanti) · dashboard più densa · navigazione più chiara. Clicca quella che ti convince di più (o dimmelo nel terminale).</p>
+
+<style>
+  .wf { border:1px solid rgba(140,115,100,.5); border-radius:10px; overflow:hidden; background:#faf5f0; font-size:11px; color:#3f312b; }
+  .wf .bar { display:flex; align-items:center; gap:8px; padding:6px 10px; background:#f4e4d8; border-bottom:1px solid rgba(140,115,100,.35); }
+  .wf .dot { width:8px;height:8px;border-radius:50%; background:#719337; }
+  .wf .pill { padding:2px 8px;border-radius:999px;background:#fff;border:1px solid rgba(140,115,100,.35); }
+  .wf .accent { color:#719337; font-weight:700; }
+  .wf .body { display:flex; min-height:230px; }
+  .wf .rail { width:44px; background:#3f312b; color:#e6ccb8; display:flex; flex-direction:column; align-items:center; gap:10px; padding:10px 0; }
+  .wf .rail i { width:20px;height:20px;border-radius:6px;background:rgba(230,204,184,.25); display:block; }
+  .wf .side { width:150px; background:#f4e4d8; border-right:1px solid rgba(140,115,100,.35); padding:10px; }
+  .wf .side .row { padding:6px 8px; border-radius:6px; margin-bottom:5px; background:#fff; border:1px solid rgba(140,115,100,.25); }
+  .wf .side .row.sel { border-color:#719337; box-shadow:inset 3px 0 0 #719337; }
+  .wf .main { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .wf .content { flex:1; padding:10px; display:flex; flex-direction:column; gap:8px; overflow:hidden; }
+  .wf .svc { display:flex; align-items:center; gap:8px; padding:6px 8px; background:#fff; border:1px solid rgba(140,115,100,.25); border-radius:6px; }
+  .wf .svc .grow{flex:1} .wf .spark{width:52px;height:14px;background:linear-gradient(90deg,#71933733,#71933766);border-radius:3px}
+  .wf .btnrow{display:flex;gap:4px} .wf .b{width:16px;height:14px;border-radius:3px;background:#e6ccb8;border:1px solid rgba(140,115,100,.4)}
+  .wf .term { background:#1a1412; color:#cead98; font-family:monospace; }
+  .wf .termtabs{display:flex;gap:2px;padding:5px 8px 0;background:#120d0c}
+  .wf .tt{padding:4px 10px;border-radius:6px 6px 0 0;background:#261d19;color:#ad907e;border:1px solid #3f312b;border-bottom:none}
+  .wf .tt.on{background:#1a1412;color:#f4e4d8}
+  .wf .termbody{padding:8px 10px;min-height:66px;line-height:1.5}
+  .wf .tools{margin-left:auto;display:flex;gap:4px}
+  .wf .tools .b{background:#261d19;border-color:#3f312b}
+  .wf .float{position:absolute;right:14px;bottom:14px;width:150px;background:#1a1412;border:1px solid #5d4a41;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+  .wf .float .fh{display:flex;gap:4px;padding:5px 7px;background:#261d19;border-radius:8px 8px 0 0}
+  .wf .float .fb{padding:7px;color:#cead98;font-family:monospace;font-size:10px}
+  .wf .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .wf .pane{background:#fff;border:1px solid rgba(140,115,100,.3);border-radius:8px;overflow:hidden}
+  .wf .paneh{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f4e4d8;border-bottom:1px solid rgba(140,115,100,.3)}
+  .wf .paneterm{background:#1a1412;color:#cead98;font-family:monospace;font-size:10px;padding:7px 8px;min-height:52px}
+  .opt-wrap{margin-bottom:26px}
+  .opt-wrap h3{margin:0 0 4px}
+  .opt-wrap .why{font-size:13px;opacity:.8;margin:0 0 10px}
+  .option.picked{outline:2px solid #719337}
+</style>
+
+<div class="opt-wrap">
+  <h3>A · IDE Workbench <span style="opacity:.6;font-weight:400">— stile VS Code / Linear</span></h3>
+  <p class="why">Rail icone + sidebar progetti · dashboard come <b>lista densa</b> di servizi (stato, porta, sparkline metriche, azioni inline) · terminale <b>agganciato in basso con tab</b>, altezza regolabile, maximize, split e "pop-out" flottante.</p>
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+   <div class="wf">
+    <div class="bar"><span class="dot"></span><b>DevPagghiaro</b><span class="pill">progetto ▾</span><span class="pill accent">Start all</span><span class="pill">Stop all</span><span class="pill" style="margin-left:auto">⌘K</span></div>
+    <div class="body" style="position:relative">
+      <div class="rail"><i></i><i></i><i></i></div>
+      <div class="side"><div class="row sel">api-gateway</div><div class="row">web-app</div><div class="row">worker</div><div class="row">db</div></div>
+      <div class="main">
+        <div class="content">
+          <div class="svc"><span class="dot"></span><b>api-gateway</b><span class="pill">:3000</span><span class="grow"></span><span class="spark"></span><span class="btnrow"><i class="b"></i><i class="b"></i><i class="b"></i></span></div>
+          <div class="svc"><span class="dot" style="background:#b40303"></span><b>web-app</b><span class="pill">:4200</span><span class="grow"></span><span class="spark"></span><span class="btnrow"><i class="b"></i><i class="b"></i><i class="b"></i></span></div>
+          <div class="svc"><span class="dot"></span><b>worker</b><span class="pill">—</span><span class="grow"></span><span class="spark"></span><span class="btnrow"><i class="b"></i><i class="b"></i><i class="b"></i></span></div>
+        </div>
+        <div class="term">
+          <div class="termtabs"><span class="tt on">api-gateway</span><span class="tt">web-app</span><span class="tt">worker</span><span class="tools"><i class="b" title="split"></i><i class="b" title="float"></i><i class="b" title="max"></i></span></div>
+          <div class="termbody">$ api-gateway listening on :3000<br>› ready in 812ms</div>
+        </div>
+      </div>
+    </div>
+   </div>
+  </div>
+</div>
+
+<div class="opt-wrap">
+  <h3>B · Master–Detail Focus <span style="opacity:.6;font-weight:400">— un servizio alla volta, terminale protagonista</span></h3>
+  <p class="why">Sidebar servizi · in alto una <b>striscia riassuntiva</b> compatta (stat + execution plan come stepper) · sotto il <b>servizio selezionato in grande</b>: terminale ampio a sinistra, pannello controlli/metriche a destra. Tab per cambiare servizio, split quando serve.</p>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+   <div class="wf">
+    <div class="bar"><span class="dot"></span><b>DevPagghiaro</b><span class="pill">progetto ▾</span><span class="pill" style="margin-left:auto">⌘K</span></div>
+    <div class="body">
+      <div class="side"><div class="row sel">api-gateway</div><div class="row">web-app</div><div class="row">worker</div><div class="row">db</div></div>
+      <div class="main">
+        <div style="display:flex;gap:6px;padding:8px 10px;background:#f4e4d8;border-bottom:1px solid rgba(140,115,100,.3);align-items:center">
+          <span class="pill">4 servizi</span><span class="pill accent">2 attivi</span>
+          <span class="pill">db → api → web</span>
+        </div>
+        <div style="flex:1;display:flex;gap:8px;padding:10px">
+          <div class="term" style="flex:1;border-radius:8px;overflow:hidden">
+            <div class="termtabs"><span class="tt on">api-gateway</span><span class="tt">+ web-app</span><span class="tools"><i class="b"></i><i class="b"></i></span></div>
+            <div class="termbody" style="min-height:96px">$ api-gateway listening on :3000<br>› GET /health 200 4ms<br>› ready</div>
+          </div>
+          <div style="width:120px;display:flex;flex-direction:column;gap:6px">
+            <div class="svc" style="justify-content:center"><span class="dot"></span> running</div>
+            <div style="background:#fff;border:1px solid rgba(140,115,100,.3);border-radius:6px;padding:8px">CPU ▁▂▅▃<br>MEM 128MB</div>
+            <div class="btnrow" style="justify-content:center"><i class="b"></i><i class="b"></i><i class="b"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+   </div>
+  </div>
+</div>
+
+<div class="opt-wrap">
+  <h3>C · Command Center <span style="opacity:.6;font-weight:400">— muro di monitoraggio, i terminali SONO la dashboard</span></h3>
+  <p class="why">Rail sottile + toolbar · l'area principale è una <b>griglia di pannelli-servizio</b>, ognuno con header (stato/metriche) e <b>terminale live integrato</b>. Ottimo per sorvegliare molti servizi insieme; i terminali si staccano in <b>finestre flottanti</b>. Il più potente, il più denso.</p>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+   <div class="wf">
+    <div class="bar"><span class="dot"></span><b>DevPagghiaro</b><span class="pill">progetto ▾</span><span class="pill accent">Start all</span><span class="pill" style="margin-left:auto">⌘K</span></div>
+    <div class="body" style="position:relative">
+      <div class="rail"><i></i><i></i><i></i></div>
+      <div class="main"><div class="content">
+        <div class="grid2">
+          <div class="pane"><div class="paneh"><span class="dot"></span><b>api-gateway</b><span class="pill" style="margin-left:auto">:3000</span></div><div class="paneterm">$ listening :3000<br>› ready 812ms</div></div>
+          <div class="pane"><div class="paneh"><span class="dot" style="background:#b40303"></span><b>web-app</b><span class="pill" style="margin-left:auto">:4200</span></div><div class="paneterm">✗ EADDRINUSE :4200<br>› exited (1)</div></div>
+          <div class="pane"><div class="paneh"><span class="dot"></span><b>worker</b><span class="pill" style="margin-left:auto">—</span></div><div class="paneterm">› polling queue…</div></div>
+          <div class="pane"><div class="paneh"><span class="dot"></span><b>db</b><span class="pill" style="margin-left:auto">:5432</span></div><div class="paneterm">› accepting connections</div></div>
+        </div>
+      </div></div>
+      <div class="float"><div class="fh"><i class="b"></i><i class="b"></i><span style="color:#ad907e;font-size:10px;margin-left:auto">web-app ⤢</span></div><div class="fb">✗ EADDRINUSE :4200<br>$ _</div></div>
+    </div>
+   </div>
+  </div>
+</div>

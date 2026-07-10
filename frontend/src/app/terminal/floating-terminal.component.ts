@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CdkDrag, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { TerminalManager, OpenTerminal } from './terminal-manager.service';
 import { TerminalViewComponent } from './terminal-view.component';
@@ -11,7 +11,7 @@ import { ServiceStatus } from '../models/project.model';
   standalone: true,
   imports: [CdkDrag, TerminalViewComponent, UiIconButtonComponent, UiStatusDotComponent],
   template: `
-    <div cdkDrag cdkDragBoundary=".shell-main" cdkDragHandle="false"
+    <div cdkDrag cdkDragBoundary=".shell-main"
       (cdkDragEnded)="onDragEnd($event)" (mousedown)="mgr.bringToFront(terminal.serviceId)"
       class="pointer-events-auto absolute flex flex-col overflow-hidden rounded-lg border border-rustic-700 bg-rustic-950 shadow-float"
       [style.left.px]="terminal.float.maximized ? 8 : terminal.float.x"
@@ -42,7 +42,6 @@ export class FloatingTerminalComponent {
   @Input({ required: true }) terminal!: OpenTerminal;
   @Input() status: ServiceStatus = 'running';
   readonly mgr = inject(TerminalManager);
-  private readonly elRef = inject(ElementRef<HTMLElement>);
 
   onDragEnd(event: CdkDragEnd): void {
     const pos = event.source.getFreeDragPosition();
