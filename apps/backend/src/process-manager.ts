@@ -13,6 +13,7 @@ import type { PtyHandle, PtySize } from "./pty-adapter";
 import { logBus } from "./log-bus";
 import { metricsCollector } from "./metrics-collector";
 import { killProcessesListeningOnPort } from "./port-processes";
+import { stopProcessTree } from "./process-tree";
 import { buildServiceProcessContext } from "./process-context";
 
 // ─── Internal state ───────────────────────────────────────────────────────────
@@ -26,6 +27,13 @@ interface ManagedProcess {
 
 const processes = new Map<string, ManagedProcess>();
 const states = new Map<string, ServiceState>();
+
+// Service ids currently being stopped intentionally. The exit handler consults
+// this so a kill-induced non-zero exit is reported as "stopped", not "error".
+const stopping = new Set<string>();
+
+// Last-known configured port per service, so stop() can free it as a fallback.
+const servicePorts = new Map<string, number>();
 
 // ─── State helpers ────────────────────────────────────────────────────────────
 
@@ -90,10 +98,18 @@ export const processManager = {
       }
     }
 
+    stopping.delete(service.id);
+
     setState(service.id, projectId, { status: "restarting" });
     logBus.emitStatus(service.id, "restarting");
 
     const cwd = resolveCwd(service.cwd, projectRootPath);
+
+    if (service.port != null) {
+      servicePorts.set(service.id, service.port);
+    } else {
+      servicePorts.delete(service.id);
+    }
 
     if (service.port != null) {
       const portCleanup = await killProcessesListeningOnPort(service.port);
@@ -159,8 +175,10 @@ export const processManager = {
     void pty.exited.then((code) => {
       metricsCollector.untrack(service.id);
       processes.delete(service.id);
+      const intentional = stopping.has(service.id);
+      const status = intentional || code === 0 ? "stopped" : "error";
       const exitState = setState(service.id, projectId, {
-        status: code === 0 ? "stopped" : "error",
+        status,
         lastExitCode: code,
         pid: null,
       });
@@ -183,17 +201,28 @@ export const processManager = {
 
     const { pty, projectId } = managed;
 
-    // Mark stopped immediately so the UI updates before the process dies
+    // Flag the stop as intentional so the exit handler reports "stopped".
+    stopping.add(serviceId);
     setState(serviceId, projectId, { status: "stopped" });
     logBus.emitStatus(serviceId, "stopped");
 
-    // Graceful SIGTERM → wait up to 5 s → SIGKILL
-    pty.kill();
-    await Promise.race([
-      pty.exited,
-      new Promise<void>((resolve) => setTimeout(resolve, 5000)),
-    ]);
-    pty.kill(9);
+    // Graceful terminate → wait up to grace → force-kill the WHOLE tree.
+    const killed = await stopProcessTree(pty.pid, {
+      graceMs: 5000,
+      onLog: (msg) => logBus.emit(serviceId, msg),
+    });
+
+    // Last-resort safety net: if the tree still holds a configured port, free it.
+    const port = servicePorts.get(serviceId);
+    if (!killed && port != null) {
+      const outcome = await killProcessesListeningOnPort(port);
+      if (outcome.killed.length > 0) {
+        logBus.emit(
+          serviceId,
+          `\r\n[DevPagghiaro] Freed port ${port} by stopping PID ${outcome.killed.join(", ")}\r\n`
+        );
+      }
+    }
 
     metricsCollector.untrack(serviceId);
     processes.delete(serviceId);
@@ -202,6 +231,8 @@ export const processManager = {
       status: "stopped",
       pid: null,
     });
+    logBus.emitStatus(serviceId, "stopped");
+    stopping.delete(serviceId);
 
     logBus.emit(serviceId, "\r\n[DevPagghiaro] Process stopped.\r\n");
     return state;
