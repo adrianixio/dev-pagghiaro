@@ -232,7 +232,12 @@ export const processManager = {
       pid: null,
     });
     logBus.emitStatus(serviceId, "stopped");
-    stopping.delete(serviceId);
+    // Do NOT clear `stopping` here: stop() does not await pty.exited, so the
+    // exit handler registered in start() (an independent path off
+    // child.on('exit')) can still fire after this point. If it saw the flag
+    // cleared already, a non-zero kill-induced exit code would be reported as
+    // "error", violating the intentional-stop contract. The flag is instead
+    // cleared at the top of the next start() call.
 
     logBus.emit(serviceId, "\r\n[DevPagghiaro] Process stopped.\r\n");
     return state;

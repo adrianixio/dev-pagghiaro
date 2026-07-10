@@ -14,6 +14,25 @@ function makeService(id: string): ServiceConfig {
   return { id, name: id, command: treeCommand(), cwd: "." };
 }
 
+// Windows-only: list immediate child pids of a process via CIM.
+async function windowsChildPids(pid: number): Promise<number[]> {
+  const proc = Bun.spawn(
+    [
+      "powershell",
+      "-NoProfile",
+      "-Command",
+      `Get-CimInstance Win32_Process -Filter "ParentProcessId=${pid}" | Select-Object -ExpandProperty ProcessId`,
+    ],
+    { stdout: "pipe", stderr: "ignore" }
+  );
+  const out = await new Response(proc.stdout).text();
+  await proc.exited;
+  return out
+    .split(/\r?\n/)
+    .map((line) => Number(line.trim()))
+    .filter((n) => Number.isInteger(n) && n > 0);
+}
+
 test("stop() kills the whole tree and reports 'stopped', not 'error'", async () => {
   const service = makeService("test-stop-tree");
   // import.meta.dir is an existing directory with no .env files → safe rootPath
@@ -23,6 +42,7 @@ test("stop() kills the whole tree and reports 'stopped', not 'error'", async () 
 
   await delay(300);
   const tree = await snapshotProcessTree(pid);
+  const winChildren = isWin ? await windowsChildPids(pid) : [];
 
   const stopped = await processManager.stop(service.id);
   await delay(200);
@@ -33,6 +53,12 @@ test("stop() kills the whole tree and reports 'stopped', not 'error'", async () 
   if (!isWin) {
     for (const descendant of tree) {
       expect(isPidAlive(descendant)).toBe(false);
+    }
+  }
+  if (isWin) {
+    expect(winChildren.length).toBeGreaterThanOrEqual(1); // the ping child must have been spawned
+    for (const child of winChildren) {
+      expect(isPidAlive(child)).toBe(false);
     }
   }
 });
