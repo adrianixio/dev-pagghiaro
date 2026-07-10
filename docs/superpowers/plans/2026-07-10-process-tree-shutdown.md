@@ -262,6 +262,13 @@ async function collectUnixDescendants(rootPid: number): Promise<number[]> {
 
 // ─── Windows ──────────────────────────────────────────────────────────────
 
+// NOTE (as-shipped): during implementation the graceful `taskkill /T` step below
+// was found ineffective for headless console trees (node/vite/npm dev servers) —
+// Windows rejects it with "can only be terminated forcefully". The shipped
+// `stopWindowsTree` therefore skips graceful and goes straight to `taskkill /T /F`
+// (no graceMs wait), and takes an optional `onLog` to report a failed kill.
+// See apps/backend/src/process-tree.ts for the final version.
+
 async function stopWindowsTree(rootPid: number, graceMs: number): Promise<boolean> {
   // Graceful: taskkill without /F asks the tree to close.
   await runCommand(["taskkill", "/PID", String(rootPid), "/T"]);
