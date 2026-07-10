@@ -1,4 +1,4 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IconRailComponent } from './icon-rail.component';
 import { SidebarComponent } from './sidebar.component';
@@ -12,6 +12,8 @@ import { UiService } from '../services/ui.service';
 import { ProjectService } from '../services/project.service';
 import { TerminalManager } from '../terminal/terminal-manager.service';
 import { ServiceStatus } from '../models/project.model';
+import { CommandPaletteService } from '../services/command-palette.service';
+import { buildCommands } from '../services/command-registry';
 
 @Component({
   selector: 'app-shell',
@@ -50,7 +52,31 @@ import { ServiceStatus } from '../models/project.model';
 export class AppShellComponent {
   readonly ui = inject(UiService);
   readonly mgr = inject(TerminalManager);
+  readonly palette = inject(CommandPaletteService);
   private readonly projectService = inject(ProjectService);
+
+  constructor() {
+    effect(() => {
+      const cmds = buildCommands({
+        projects: () => this.projectService.projects(),
+        activeProject: () => this.projectService.activeProject(),
+        setActiveProject: (id) => this.projectService.setActiveProject(id),
+        startService: (p, s) => this.projectService.startService(p, s),
+        stopService: (p, s) => this.projectService.stopService(p, s),
+        restartService: (p, s) => this.projectService.restartService(p, s),
+        killServicePort: (p, s) => { void this.projectService.killServicePort(p, s); },
+        startAllServices: (p) => this.projectService.startAllServices(p),
+        stopAllServices: (p) => this.projectService.stopAllServices(p),
+        restartAllServices: (p) => this.projectService.restartAllServices(p),
+        reloadProjectContext: (p) => this.projectService.reloadProjectContext(p),
+        openTerminal: (p, s, name) => this.mgr.open(p, s, name),
+        toggleDarkMode: () => this.ui.toggleDarkMode(),
+        openNewProject: () => this.ui.openNewProject(),
+      });
+      this.palette.clearCommands();
+      this.palette.registerCommands(cmds);
+    });
+  }
 
   statusOf(serviceId: string): ServiceStatus {
     for (const p of this.projectService.projects()) {

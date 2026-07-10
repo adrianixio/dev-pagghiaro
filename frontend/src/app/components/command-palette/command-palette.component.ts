@@ -15,54 +15,48 @@ import { UiService } from '../../services/ui.service';
     @if (commandPaletteService.isOpen()) {
       <div class="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/60 backdrop-blur-sm"
            (click)="close()">
-        <div class="w-full max-w-2xl bg-white dark:bg-rustic-800 border border-rustic-200 dark:border-rustic-700 rounded-xl shadow-2xl overflow-hidden flex flex-col transition-colors duration-300"
+        <div class="flex w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-surface-raised shadow-float transition-colors dark:border-rustic-700 dark:bg-rustic-800"
              (click)="$event.stopPropagation()">
-          <div class="flex items-center px-4 py-3 border-b border-rustic-200 dark:border-rustic-700 bg-rustic-50 dark:bg-rustic-900 transition-colors duration-300">
-            <lucide-icon name="search" [size]="20" class="text-rustic-400 dark:text-rustic-500 mr-3"></lucide-icon>
+          <div class="flex items-center border-b border-border bg-surface px-4 py-3 transition-colors dark:border-rustic-700 dark:bg-rustic-900">
+            <lucide-icon name="search" [size]="20" class="mr-3 text-content-muted"></lucide-icon>
             <input #searchInput type="text"
                    [(ngModel)]="searchQuery"
                    (ngModelChange)="filterCommands()"
                    (keydown)="handleKeydown($event)"
                    placeholder="Type a command or search..."
-                   class="flex-1 bg-transparent border-none outline-none text-rustic-900 dark:text-rustic-100 font-sans text-lg placeholder-rustic-400 dark:placeholder-rustic-500"
+                   class="flex-1 border-none bg-transparent font-sans text-lg text-content outline-none placeholder-content-muted dark:text-rustic-100"
                    autofocus>
-            <div class="flex items-center gap-1 text-xs text-rustic-500 dark:text-rustic-400 font-sans">
-              <kbd class="px-1.5 py-0.5 rounded bg-rustic-100 dark:bg-rustic-800 border border-rustic-200 dark:border-rustic-700">ESC</kbd> to close
+            <div class="flex items-center gap-1 font-sans text-xs text-content-muted">
+              <kbd class="rounded border border-border bg-surface px-1.5 py-0.5 dark:border-rustic-700 dark:bg-rustic-800">ESC</kbd> to close
             </div>
           </div>
 
           <div class="max-h-[60vh] overflow-y-auto py-2">
             @if (filteredCommands.length === 0) {
-              <div class="px-4 py-8 text-center text-rustic-500 dark:text-rustic-400 font-sans">
+              <div class="px-4 py-8 text-center font-sans text-content-muted">
                 No commands found for "{{ searchQuery }}"
               </div>
             } @else {
               <ul class="px-2">
                 @for (cmd of filteredCommands; track cmd.id; let i = $index) {
                   <li>
-                    <button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors"
-                            [class.bg-rustic-100]="selectedIndex === i"
-                            [class.dark:bg-rustic-700]="selectedIndex === i"
-                            [class.text-country-green]="selectedIndex === i"
-                            [class.text-rustic-700]="selectedIndex !== i"
-                            [class.dark:text-rustic-300]="selectedIndex !== i"
+                    <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
+                            [class]="selectedIndex === i ? 'bg-accent/12 text-accent' : 'text-content dark:text-rustic-300'"
                             (mouseenter)="selectedIndex = i"
                             (click)="executeCommand(cmd)">
                       @if (cmd.icon) {
                         <lucide-icon [name]="cmd.icon" [size]="16"
-                                     [class.text-country-green]="selectedIndex === i"
-                                     [class.text-rustic-400]="selectedIndex !== i"
-                                     [class.dark:text-rustic-500]="selectedIndex !== i"></lucide-icon>
+                                     [class.text-accent]="selectedIndex === i"
+                                     [class.text-content-muted]="selectedIndex !== i"></lucide-icon>
                       } @else {
-                        <div class="w-4 h-4"></div>
+                        <div class="h-4 w-4"></div>
                       }
 
                       <div class="flex flex-col">
-                        <span class="font-sans font-medium text-sm">{{ cmd.title }}</span>
+                        <span class="font-sans text-sm font-medium">{{ cmd.title }}</span>
                         @if (cmd.description) {
-                          <span class="text-xs text-rustic-500 dark:text-rustic-400"
-                                [class.text-rustic-600]="selectedIndex === i"
-                                [class.dark:text-rustic-300]="selectedIndex === i">{{ cmd.description }}</span>
+                          <span class="text-xs text-content-muted"
+                                [class.text-accent]="selectedIndex === i">{{ cmd.description }}</span>
                         }
                       </div>
                     </button>

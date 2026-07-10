@@ -6,11 +6,13 @@ import { LucideAngularModule } from 'lucide-angular';
 import { EditableServiceDraft } from '../../models/config-form.model';
 import { ProjectService } from '../../services/project.service';
 import { UiService } from '../../services/ui.service';
+import { UiIconButtonComponent } from '../../ui/ui-icon-button.component';
+import { UiBadgeComponent } from '../../ui/ui-badge.component';
 
 @Component({
   selector: 'app-config-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [CommonModule, FormsModule, LucideAngularModule, CdkDropList, CdkDrag, CdkDragHandle, UiIconButtonComponent, UiBadgeComponent],
   styles: [`
     .cdk-drag-preview {
       box-sizing: border-box;
@@ -29,89 +31,87 @@ import { UiService } from '../../services/ui.service';
   `],
   template: `
     <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div class="w-full max-w-4xl bg-white dark:bg-rustic-800 border border-rustic-200 dark:border-rustic-700 rounded-xl shadow-2xl overflow-hidden flex flex-col mx-4 transition-colors duration-300">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-rustic-200 dark:border-rustic-700 bg-rustic-50 dark:bg-rustic-900 transition-colors duration-300">
+      <div class="mx-4 flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-border bg-surface-raised shadow-float transition-colors dark:border-rustic-700 dark:bg-rustic-800">
+        <div class="flex items-center justify-between border-b border-border bg-surface px-6 py-4 transition-colors dark:border-rustic-700 dark:bg-rustic-900">
           <div>
-            <h2 class="text-xl font-bold text-country-green tracking-wider">{{ projectId ? 'Edit Project' : 'New Project' }}</h2>
-            <p class="text-xs text-rustic-500 dark:text-rustic-400 font-sans mt-1">Manage projects and their services without editing JSON manually.</p>
+            <h2 class="font-display text-xl font-bold tracking-wider text-accent">{{ projectId ? 'Edit Project' : 'New Project' }}</h2>
+            <p class="mt-1 font-sans text-xs text-content-muted">Manage projects and their services without editing JSON manually.</p>
           </div>
-          <button class="p-2 rounded-md hover:bg-rustic-200 dark:hover:bg-rustic-700 text-rustic-400 dark:text-rustic-500 hover:text-rustic-900 dark:hover:text-rustic-100 transition-colors"
-                  (click)="close()">
-            <lucide-icon name="x" [size]="20"></lucide-icon>
-          </button>
+          <ui-icon-button icon="x" label="Close" (click)="close()"></ui-icon-button>
         </div>
 
-        <div class="p-6 overflow-y-auto max-h-[70vh]">
+        <div class="max-h-[70vh] overflow-y-auto p-6">
           <form (ngSubmit)="save()" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label class="block text-sm font-sans font-medium text-rustic-700 dark:text-rustic-300 mb-2">Project Name</label>
+                <label class="mb-2 block font-sans text-sm font-medium text-content dark:text-rustic-300">Project Name</label>
                 <input type="text" [(ngModel)]="projectName" name="projectName"
                        class="input-field" placeholder="e.g. My Awesome Project">
               </div>
 
               <div>
-                <label class="block text-sm font-sans font-medium text-rustic-700 dark:text-rustic-300 mb-2">Project Path</label>
+                <label class="mb-2 block font-sans text-sm font-medium text-content dark:text-rustic-300">Project Path</label>
                 <input type="text" [(ngModel)]="projectPath" name="projectPath"
                        class="input-field" placeholder="C:/dev/my-project">
               </div>
             </div>
 
-            <div class="border-t border-rustic-200 dark:border-rustic-700 pt-6">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-rustic-900 dark:text-rustic-100">Services</h3>
-                <button type="button" class="btn btn-secondary text-xs py-1" (click)="addService()">
+            <div class="border-t border-border pt-6 dark:border-rustic-700">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="font-display text-lg font-bold text-content dark:text-rustic-100">Services</h3>
+                <button type="button" class="rounded-md border border-border bg-surface-raised px-2.5 py-1 text-xs font-semibold text-content-muted transition-colors hover:bg-rustic-100 dark:border-rustic-700 dark:bg-rustic-800 dark:text-rustic-200 dark:hover:bg-rustic-700"
+                        (click)="addService()">
                   + Add Service
                 </button>
               </div>
 
               <div class="space-y-4" cdkDropList (cdkDropListDropped)="drop($event)">
                 @for (service of services; track service.draftKey; let i = $index) {
-                  <div cdkDrag class="p-4 bg-rustic-50 dark:bg-rustic-900 border border-rustic-200 dark:border-rustic-700 rounded-lg relative group transition-colors duration-300 flex gap-4">
-                    <div class="flex items-center justify-center cursor-grab active:cursor-grabbing text-rustic-400 hover:text-rustic-600 dark:hover:text-rustic-300" cdkDragHandle>
+                  <div cdkDrag class="group relative flex gap-4 rounded-lg border border-border bg-surface p-4 transition-colors dark:border-rustic-700 dark:bg-rustic-900">
+                    <div class="flex cursor-grab items-center justify-center text-content-muted hover:text-content active:cursor-grabbing" cdkDragHandle>
                       <lucide-icon name="grip-vertical" [size]="20"></lucide-icon>
                     </div>
                     <div class="flex-1">
-                      <button type="button" class="absolute top-2 right-2 p-1 text-rustic-400 dark:text-rustic-500 hover:text-country-red dark:hover:text-country-red opacity-0 group-hover:opacity-100 transition-opacity"
+                      <button type="button" class="absolute right-2 top-2 p-1 text-content-muted opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
                               (click)="removeService(i)">
                         <lucide-icon name="x" [size]="16"></lucide-icon>
                       </button>
 
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
-                          <label class="block text-xs font-sans font-medium text-rustic-600 dark:text-rustic-400 mb-1">Service Name</label>
+                          <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Service Name</label>
                           <input type="text" [(ngModel)]="service.name" [name]="'serviceName' + i"
-                                 class="input-field text-sm py-1.5" placeholder="e.g. api">
+                                 class="input-field py-1.5 text-sm" placeholder="e.g. api">
                         </div>
                         <div>
-                          <label class="block text-xs font-sans font-medium text-rustic-600 dark:text-rustic-400 mb-1">Command</label>
+                          <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Command</label>
                           <input type="text" [(ngModel)]="service.command" [name]="'serviceCommand' + i"
-                                 class="input-field text-sm py-1.5 font-mono" placeholder="e.g. bun run dev">
+                                 class="input-field py-1.5 font-mono text-sm" placeholder="e.g. bun run dev">
                         </div>
                         <div>
-                          <label class="block text-xs font-sans font-medium text-rustic-600 dark:text-rustic-400 mb-1">Working Directory</label>
+                          <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Working Directory</label>
                           <input type="text" [(ngModel)]="service.cwd" [name]="'serviceCwd' + i"
-                                 class="input-field text-sm py-1.5 font-mono" placeholder="e.g. apps/backend">
+                                 class="input-field py-1.5 font-mono text-sm" placeholder="e.g. apps/backend">
                         </div>
                         <div>
-                          <label class="block text-xs font-sans font-medium text-rustic-600 dark:text-rustic-400 mb-1">Port (Optional)</label>
+                          <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Port (Optional)</label>
                           <input type="number" [(ngModel)]="service.port" [name]="'servicePort' + i"
-                                 class="input-field text-sm py-1.5 font-mono" placeholder="e.g. 3000">
+                                 class="input-field py-1.5 font-mono text-sm" placeholder="e.g. 3000">
                         </div>
-                        <label class="flex items-center gap-2 text-sm text-rustic-700 dark:text-rustic-300 font-sans md:col-span-2">
+                        <label class="flex items-center gap-2 font-sans text-sm text-content dark:text-rustic-300 md:col-span-2">
                           <input type="checkbox" [(ngModel)]="service.autoStart" [name]="'serviceAutoStart' + i"
-                                 class="rounded border-rustic-300 dark:border-rustic-600 bg-white dark:bg-rustic-800 text-country-green focus:ring-country-green">
+                                 class="rounded border-border bg-surface-raised text-accent focus:ring-accent dark:border-rustic-600 dark:bg-rustic-800">
                           Auto Start
                         </label>
-                        <div class="md:col-span-2 rounded-lg border border-dashed border-rustic-300 dark:border-rustic-600 bg-white/80 dark:bg-rustic-800/70 px-3 py-3">
+                        <div class="rounded-lg border border-dashed border-border bg-surface-raised/80 px-3 py-3 dark:border-rustic-600 dark:bg-rustic-800/70 md:col-span-2">
                           <div class="flex flex-wrap items-center justify-between gap-3">
-                            <label class="flex items-center gap-2 text-sm text-rustic-700 dark:text-rustic-300 font-sans">
+                            <label class="flex items-center gap-2 font-sans text-sm text-content dark:text-rustic-300">
                               <input type="checkbox" [(ngModel)]="service.includeInExecution" [name]="'serviceExecution' + i"
-                                     class="rounded border-rustic-300 dark:border-rustic-600 bg-white dark:bg-rustic-800 text-country-green focus:ring-country-green">
+                                     class="rounded border-border bg-surface-raised text-accent focus:ring-accent dark:border-rustic-600 dark:bg-rustic-800">
                               Include in project execution order
                             </label>
                           </div>
-                          <p class="mt-2 text-xs text-rustic-500 dark:text-rustic-400">
+                          <p class="mt-2 text-xs text-content-muted">
                             The current list order defines the custom project launch sequence for selected services.
                           </p>
                         </div>
@@ -122,31 +122,30 @@ import { UiService } from '../../services/ui.service';
               </div>
             </div>
 
-            <div class="border-t border-rustic-200 dark:border-rustic-700 pt-6">
+            <div class="border-t border-border pt-6 dark:border-rustic-700">
               <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <h3 class="text-lg font-bold text-rustic-900 dark:text-rustic-100">Execution Order</h3>
-                  <p class="text-xs text-rustic-500 dark:text-rustic-400 font-sans mt-1">
+                  <h3 class="font-display text-lg font-bold text-content dark:text-rustic-100">Execution Order</h3>
+                  <p class="mt-1 font-sans text-xs text-content-muted">
                     Choose which services run in bulk start/restart and optionally wait between one launch and the next.
                   </p>
                 </div>
                 <div class="w-full md:w-56">
-                  <label class="block text-xs font-sans font-medium text-rustic-600 dark:text-rustic-400 mb-1">Delay Between Services (ms)</label>
+                  <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Delay Between Services (ms)</label>
                   <input type="number" min="0" step="100" [(ngModel)]="executionDelayMs" name="executionDelayMs"
-                         class="input-field text-sm py-1.5 font-mono" placeholder="0">
+                         class="input-field py-1.5 font-mono text-sm" placeholder="0">
                 </div>
               </div>
 
-              <div class="mt-4 rounded-lg border border-rustic-200 dark:border-rustic-700 bg-rustic-50 dark:bg-rustic-900 px-4 py-3">
+              <div class="mt-4 rounded-lg border border-border bg-surface px-4 py-3 dark:border-rustic-700 dark:bg-rustic-900">
                 <div class="flex items-center justify-between gap-3">
-                  <div class="text-xs uppercase tracking-[0.2em] text-rustic-500 dark:text-rustic-400">Launch Preview</div>
+                  <div class="text-xs uppercase tracking-[0.2em] text-content-muted">Launch Preview</div>
                   @if (projectId) {
                     <div class="text-[11px] font-sans"
-                         [class.text-rustic-500]="executionOrderSaveState === 'idle'"
-                         [class.dark:text-rustic-400]="executionOrderSaveState === 'idle'"
-                         [class.text-country-blue]="executionOrderSaveState === 'saving'"
-                         [class.text-country-green]="executionOrderSaveState === 'saved'"
-                         [class.text-country-red]="executionOrderSaveState === 'error'">
+                         [class.text-content-muted]="executionOrderSaveState === 'idle'"
+                         [class.text-info]="executionOrderSaveState === 'saving'"
+                         [class.text-accent]="executionOrderSaveState === 'saved'"
+                         [class.text-danger]="executionOrderSaveState === 'error'">
                       @switch (executionOrderSaveState) {
                         @case ('saving') { Saving order... }
                         @case ('saved') { Order saved }
@@ -159,27 +158,33 @@ import { UiService } from '../../services/ui.service';
                 @if (executionPreview().length > 0) {
                   <div class="mt-3 flex flex-wrap gap-2">
                     @for (serviceName of executionPreview(); track $index; let i = $index) {
-                      <div class="flex items-center gap-2 rounded-full border border-rustic-300 dark:border-rustic-600 bg-white dark:bg-rustic-800 px-3 py-1 text-sm text-rustic-700 dark:text-rustic-200">
-                        <span class="text-country-green font-semibold">{{ i + 1 }}</span>
+                      <ui-badge tone="neutral">
+                        <span class="font-semibold text-accent">{{ i + 1 }}</span>
                         <span>{{ serviceName }}</span>
-                      </div>
+                      </ui-badge>
                     }
                   </div>
                 } @else {
-                  <p class="mt-2 text-sm text-rustic-500 dark:text-rustic-400">No service selected for the custom execution order yet.</p>
+                  <p class="mt-2 text-sm text-content-muted">No service selected for the custom execution order yet.</p>
                 }
               </div>
             </div>
 
-            <div class="flex justify-between gap-3 flex-wrap pt-4 border-t border-rustic-200 dark:border-rustic-700">
+            <div class="flex flex-wrap justify-between gap-3 border-t border-border pt-4 dark:border-rustic-700">
               <div>
                 @if (projectId) {
-                  <button type="button" class="btn btn-danger" (click)="removeProject()">Delete Project</button>
+                  <button type="button" class="inline-flex items-center gap-2 rounded-md bg-danger px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-danger/90"
+                          (click)="removeProject()">
+                    Delete Project
+                  </button>
                 }
               </div>
               <div class="flex gap-3">
-                <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
-                <button type="submit" class="btn btn-primary flex items-center gap-2">
+                <button type="button" class="inline-flex items-center gap-2 rounded-md border border-border bg-surface-raised px-3.5 py-2 text-sm font-semibold text-content-muted transition-colors hover:bg-rustic-100 dark:border-rustic-700 dark:bg-rustic-800 dark:text-rustic-200 dark:hover:bg-rustic-700"
+                        (click)="close()">
+                  Cancel
+                </button>
+                <button type="submit" class="inline-flex items-center gap-2 rounded-md bg-accent px-3.5 py-2 text-sm font-bold text-white transition-colors hover:bg-accent/90">
                   <lucide-icon name="save" [size]="16"></lucide-icon>
                   Save Configuration
                 </button>
