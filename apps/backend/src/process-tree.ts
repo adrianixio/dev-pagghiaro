@@ -30,16 +30,21 @@ export async function stopProcessTree(
   opts: { graceMs?: number; onLog?: (msg: string) => void } = {}
 ): Promise<boolean> {
   const graceMs = Math.max(0, opts.graceMs ?? 5000);
+  const onLog = opts.onLog;
 
   if (process.platform === "win32") {
-    return stopWindowsTree(pid);
+    return stopWindowsTree(pid, onLog);
   }
-  return stopUnixTree(pid, graceMs);
+  return stopUnixTree(pid, graceMs, onLog);
 }
 
 // ─── Unix ───────────────────────────────────────────────────────────────────
 
-async function stopUnixTree(rootPid: number, graceMs: number): Promise<boolean> {
+async function stopUnixTree(
+  rootPid: number,
+  graceMs: number,
+  onLog?: (msg: string) => void
+): Promise<boolean> {
   // Snapshot BEFORE signalling: once the shell dies its children reparent to
   // init and can no longer be found by walking down from rootPid.
   const pids = await snapshotProcessTree(rootPid);
@@ -56,11 +61,17 @@ async function stopUnixTree(rootPid: number, graceMs: number): Promise<boolean> 
   }
 
   if (pids.some((pid) => isPidAlive(pid))) {
+    onLog?.("\r\n[DevPagghiaro] Process did not exit gracefully — sending SIGKILL\r\n");
     signalUnix(pids, rootPid, "SIGKILL");
     await delay(POLL_INTERVAL_MS);
   }
 
-  return pids.every((pid) => !isPidAlive(pid));
+  const survivors = pids.filter((pid) => isPidAlive(pid));
+  if (survivors.length > 0) {
+    onLog?.(`\r\n[DevPagghiaro] Failed to terminate PID ${survivors.join(", ")}\r\n`);
+    return false;
+  }
+  return true;
 }
 
 function signalUnix(pids: number[], rootPid: number, signal: NodeJS.Signals): void {
@@ -119,12 +130,19 @@ async function collectUnixDescendants(rootPid: number): Promise<number[]> {
 
 // ─── Windows ──────────────────────────────────────────────────────────────
 
-async function stopWindowsTree(rootPid: number): Promise<boolean> {
+async function stopWindowsTree(
+  rootPid: number,
+  onLog?: (msg: string) => void
+): Promise<boolean> {
   // Windows has no working graceful terminate for headless console trees:
   // `taskkill /T` without /F is rejected for windowless console processes
   // (node/vite/npm dev servers), so a graceful attempt would only waste the
   // grace period. Go straight to a forced tree-kill.
   await runCommand(["taskkill", "/PID", String(rootPid), "/T", "/F"]);
   await delay(POLL_INTERVAL_MS);
-  return !isPidAlive(rootPid);
+  if (isPidAlive(rootPid)) {
+    onLog?.(`\r\n[DevPagghiaro] Failed to terminate PID ${rootPid}\r\n`);
+    return false;
+  }
+  return true;
 }

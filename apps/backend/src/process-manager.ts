@@ -13,7 +13,7 @@ import type { PtyHandle, PtySize } from "./pty-adapter";
 import { logBus } from "./log-bus";
 import { metricsCollector } from "./metrics-collector";
 import { killProcessesListeningOnPort } from "./port-processes";
-import { stopProcessTree } from "./process-tree";
+import { stopProcessTree, isPidAlive } from "./process-tree";
 import { buildServiceProcessContext } from "./process-context";
 
 // ─── Internal state ───────────────────────────────────────────────────────────
@@ -212,9 +212,11 @@ export const processManager = {
       onLog: (msg) => logBus.emit(serviceId, msg),
     });
 
-    // Last-resort safety net: if the tree still holds a configured port, free it.
+    // Last-resort safety net: if the tree still holds a configured port, free it,
+    // then re-check whether the root process is finally dead.
+    let treeDead = killed;
     const port = servicePorts.get(serviceId);
-    if (!killed && port != null) {
+    if (!treeDead && port != null) {
       const outcome = await killProcessesListeningOnPort(port);
       if (outcome.killed.length > 0) {
         logBus.emit(
@@ -222,16 +224,27 @@ export const processManager = {
           `\r\n[DevPagghiaro] Freed port ${port} by stopping PID ${outcome.killed.join(", ")}\r\n`
         );
       }
+      treeDead = !isPidAlive(pty.pid);
     }
 
     metricsCollector.untrack(serviceId);
     processes.delete(serviceId);
 
+    // If the tree is still alive after force-kill AND the port fallback, report
+    // "error" instead of falsely claiming the service stopped.
+    const finalStatus: ServiceStatus = treeDead ? "stopped" : "error";
+    if (!treeDead) {
+      logBus.emit(
+        serviceId,
+        `\r\n[DevPagghiaro] Could not fully stop service — PID ${pty.pid} is still alive\r\n`
+      );
+    }
+
     const state = setState(serviceId, projectId, {
-      status: "stopped",
+      status: finalStatus,
       pid: null,
     });
-    logBus.emitStatus(serviceId, "stopped");
+    logBus.emitStatus(serviceId, finalStatus);
     // Do NOT clear `stopping` here: stop() does not await pty.exited, so the
     // exit handler registered in start() (an independent path off
     // child.on('exit')) can still fire after this point. If it saw the flag
@@ -239,7 +252,12 @@ export const processManager = {
     // "error", violating the intentional-stop contract. The flag is instead
     // cleared at the top of the next start() call.
 
-    logBus.emit(serviceId, "\r\n[DevPagghiaro] Process stopped.\r\n");
+    logBus.emit(
+      serviceId,
+      treeDead
+        ? "\r\n[DevPagghiaro] Process stopped.\r\n"
+        : "\r\n[DevPagghiaro] Stop completed with errors.\r\n"
+    );
     return state;
   },
 
