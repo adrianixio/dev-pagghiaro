@@ -1,26 +1,26 @@
+@import '@fontsource/bitter/600.css';
+@import '@fontsource/bitter/700.css';
+@import '@fontsource-variable/source-sans-3';
+@import '@fontsource-variable/jetbrains-mono';
 @import '@xterm/xterm/css/xterm.css';
-@import url('https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+}
+:root.dark {
+  color-scheme: dark;
+}
+
 @layer base {
   body {
-    @apply bg-rustic-50 text-rustic-900 font-sans antialiased dark:bg-rustic-950 dark:text-rustic-100 transition-colors duration-300;
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    overflow: hidden;
+    @apply bg-surface text-content font-sans antialiased;
   }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-display;
+  h1, h2, h3, .font-display {
+    font-family: "Bitter", Georgia, serif;
   }
 
   /* Custom scrollbar for country aesthetic */

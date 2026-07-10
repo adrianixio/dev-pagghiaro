@@ -71,6 +71,9 @@
         "@angular-devkit/build-angular": "^18.2.21",
         "@angular/cli": "^18.2.21",
         "@angular/compiler-cli": "^18.2.0",
+        "@fontsource-variable/jetbrains-mono": "^5.2.8",
+        "@fontsource-variable/source-sans-3": "^5.2.9",
+        "@fontsource/bitter": "^5.2.10",
         "@types/jasmine": "~5.1.0",
         "jasmine-core": "~5.2.0",
         "karma": "~6.4.0",
@@ -369,6 +372,12 @@
     "@esbuild/win32-ia32": ["@esbuild/win32-ia32@0.20.1", "", { "os": "win32", "cpu": "ia32" }, "sha512-HzcJa1NcSWTAU0MJIxOho8JftNp9YALui3o+Ny7hCh0v5f90nprly1U3Sj1Ldj/CvKKdvvFsCRvDkpsEMp4DNw=="],
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.20.1", "", { "os": "win32", "cpu": "x64" }, "sha512-0MBh53o6XtI6ctDnRMeQ+xoCN8kD2qI1rY1KgF/xdWQwoFeKou7puvDfV8/Wv4Ctx2rRpET/gGdz3YlNtNACSA=="],
+
+    "@fontsource-variable/jetbrains-mono": ["@fontsource-variable/jetbrains-mono@5.2.8", "", {}, "sha512-WBA9elru6Jdp5df2mES55wuOO0WIrn3kpXnI4+W2ek5u3ZgLS9XS4gmIlcQhiZOWEKl95meYdvK7xI+ETLCq/Q=="],
+
+    "@fontsource-variable/source-sans-3": ["@fontsource-variable/source-sans-3@5.2.9", "", {}, "sha512-K9fkQbb0BNnRmmaU+Gpr6U4IaYKpNzA8t07J6aam2i+6v84RT72MVpar8OBr3yYAEznj4riKivPQ2nAF2fPKsw=="],
+
+    "@fontsource/bitter": ["@fontsource/bitter@5.2.10", "", {}, "sha512-oqQgWAp+lgoGX7iFbVSbTkKyz0k8EK8+bLdUKDTqGTjW0HqrCue70v4jwbZvyNV/3DZol/b/L/WpdXfuQXKBUg=="],
 
     "@inquirer/checkbox": ["@inquirer/checkbox@2.5.0", "", { "dependencies": { "@inquirer/core": "^9.1.0", "@inquirer/figures": "^1.0.5", "@inquirer/type": "^1.5.3", "ansi-escapes": "^4.3.2", "yoctocolors-cjs": "^2.1.2" } }, "sha512-sMgdETOfi2dUHT8r7TT1BTKOwNvdDGFDXYWtQ2J69SvlYNntk9I/gJe7r5yvMwwsuKnYbuRs3pNhx4tgNck5aA=="],
 
