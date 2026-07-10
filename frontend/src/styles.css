@@ -17,7 +17,7 @@
 
 @layer base {
   body {
-    @apply bg-surface text-content font-sans antialiased;
+    @apply bg-surface text-content font-sans antialiased dark:bg-rustic-950 dark:text-rustic-100;
   }
   h1, h2, h3, .font-display {
     font-family: "Bitter", Georgia, serif;
