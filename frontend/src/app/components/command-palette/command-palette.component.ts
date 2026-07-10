@@ -3,9 +3,6 @@ import { Component, ElementRef, ViewChild, effect, inject } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { Command, CommandPaletteService } from '../../services/command-palette.service';
-import { ProjectService } from '../../services/project.service';
-import { TerminalService } from '../../services/terminal.service';
-import { UiService } from '../../services/ui.service';
 
 @Component({
   selector: 'app-command-palette',
@@ -74,19 +71,14 @@ export class CommandPaletteComponent {
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
 
   readonly commandPaletteService = inject(CommandPaletteService);
-  readonly projectService = inject(ProjectService);
-  readonly terminalService = inject(TerminalService);
-  readonly uiService = inject(UiService);
 
   searchQuery = '';
   filteredCommands: Command[] = [];
   selectedIndex = 0;
-  private allCommands: Command[] = [];
 
   constructor() {
     effect(() => {
       if (this.commandPaletteService.isOpen()) {
-        this.buildCommands();
         this.searchQuery = '';
         this.filterCommands();
         setTimeout(() => this.searchInput?.nativeElement.focus(), 50);
@@ -96,9 +88,10 @@ export class CommandPaletteComponent {
 
   filterCommands(): void {
     const query = this.searchQuery.toLowerCase();
+    const allCommands = this.commandPaletteService.commands();
     this.filteredCommands = !query
-      ? this.allCommands
-      : this.allCommands.filter(
+      ? allCommands
+      : allCommands.filter(
           (command) =>
             command.title.toLowerCase().includes(query) ||
             command.description?.toLowerCase().includes(query)
@@ -130,114 +123,5 @@ export class CommandPaletteComponent {
 
   close(): void {
     this.commandPaletteService.close();
-  }
-
-  private buildCommands(): void {
-    const commands: Command[] = [
-      {
-        id: 'global:new-project',
-        title: 'Create New Project',
-        description: 'Open an empty project form',
-        icon: 'plus',
-        action: () => this.uiService.openNewProject(),
-      },
-      {
-        id: 'global:settings',
-        title: 'Open Project Configuration',
-        description: 'Edit the active project and its services',
-        icon: 'settings',
-        action: () => this.uiService.openConfig(this.projectService.activeProjectId()),
-      },
-    ];
-
-    for (const project of this.projectService.projects()) {
-      commands.push({
-        id: `project:switch:${project.id}`,
-        title: `Switch to Project: ${project.name}`,
-        description: project.rootPath,
-        icon: 'folder',
-        action: () => this.projectService.setActiveProject(project.id),
-      });
-    }
-
-    const activeProject = this.projectService.activeProject();
-    if (activeProject) {
-      commands.push(
-        {
-          id: `project:start-all:${activeProject.id}`,
-          title: 'Start All Services',
-          description: `Start all services in ${activeProject.name}`,
-          icon: 'play',
-          action: () => void this.projectService.startAllServices(activeProject.id),
-        },
-        {
-          id: `project:restart-all:${activeProject.id}`,
-          title: 'Restart All Services',
-          description: `Restart all services in ${activeProject.name}`,
-          icon: 'refresh-cw',
-          action: () => void this.projectService.restartAllServices(activeProject.id),
-        },
-        {
-          id: `project:stop-all:${activeProject.id}`,
-          title: 'Stop All Services',
-          description: `Stop all services in ${activeProject.name}`,
-          icon: 'square',
-          action: () => void this.projectService.stopAllServices(activeProject.id),
-        },
-        {
-          id: `project:reload-context:${activeProject.id}`,
-          title: 'Reload Process Context',
-          description: `Reload env files and restart active services in ${activeProject.name}`,
-          icon: 'rotate-cw',
-          action: () => void this.projectService.reloadProjectContext(activeProject.id),
-        },
-        {
-          id: `project:edit:${activeProject.id}`,
-          title: `Edit Project: ${activeProject.name}`,
-          description: 'Open the configuration form for this project',
-          icon: 'settings',
-          action: () => this.uiService.openConfig(activeProject.id),
-        }
-      );
-
-      for (const service of activeProject.services) {
-        commands.push({
-          id: `service:terminal:${service.id}`,
-          title: `Open Terminal: ${service.name}`,
-          description: `View logs for ${service.command}`,
-          icon: 'terminal',
-          action: () => this.terminalService.toggleTerminal(activeProject.id, service.id, service.name),
-        });
-
-        if (service.status === 'running' || service.status === 'restarting') {
-          commands.push(
-            {
-              id: `service:restart:${service.id}`,
-              title: `Restart Service: ${service.name}`,
-              description: service.command,
-              icon: 'refresh-cw',
-              action: () => void this.projectService.restartService(activeProject.id, service.id),
-            },
-            {
-              id: `service:stop:${service.id}`,
-              title: `Stop Service: ${service.name}`,
-              description: service.command,
-              icon: 'square',
-              action: () => void this.projectService.stopService(activeProject.id, service.id),
-            }
-          );
-        } else {
-          commands.push({
-            id: `service:start:${service.id}`,
-            title: `Start Service: ${service.name}`,
-            description: service.command,
-            icon: 'play',
-            action: () => void this.projectService.startService(activeProject.id, service.id),
-          });
-        }
-      }
-    }
-
-    this.allCommands = commands;
   }
 }
