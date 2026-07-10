@@ -69,4 +69,28 @@ describe('TerminalManager', () => {
     expect(mgr.splitIds()).toEqual(['s2']);
     expect(mgr.activeId()).toBe('s2');
   });
+
+  it('closing the active terminal reassigns activeId to the next docked terminal', () => {
+    mgr.open('p1', 's1', 'api');
+    mgr.open('p1', 's2', 'web'); // active becomes s2
+    mgr.close('s2');
+    expect(mgr.activeId()).toBe('s1');
+  });
+
+  it('floating the active terminal reassigns activeId to the next docked terminal', () => {
+    mgr.open('p1', 's1', 'api');
+    mgr.open('p1', 's2', 'web'); // active becomes s2
+    mgr.float('s2');
+    expect(mgr.activeId()).toBe('s1');
+    expect(mgr.floatingTerminals().map((t) => t.serviceId)).toEqual(['s2']);
+  });
+
+  it('persists the maximized state of a floating terminal to localStorage', () => {
+    localStorage.clear();
+    mgr.open('p1', 's1', 'api');
+    mgr.float('s1');
+    mgr.toggleMaximize('s1');
+    const stored = JSON.parse(localStorage.getItem('dev-pagghiaro-floats') ?? '{}');
+    expect(stored['s1']?.maximized).toBe(true);
+  });
 });

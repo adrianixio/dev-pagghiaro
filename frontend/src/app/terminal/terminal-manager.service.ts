@@ -87,6 +87,7 @@ export class TerminalManager {
 
   toggleMaximize(serviceId: string): void {
     this.updateFloat(serviceId, (g) => ({ ...g, maximized: !g.maximized }));
+    this.persistFloats();
   }
 
   setFloatGeometry(serviceId: string, geo: Partial<FloatGeometry>): void {
