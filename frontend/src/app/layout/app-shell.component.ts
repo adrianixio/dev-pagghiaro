@@ -75,7 +75,7 @@ export class AppShellComponent {
       });
       this.palette.clearCommands();
       this.palette.registerCommands(cmds);
-    });
+    }, { allowSignalWrites: true });
   }
 
   statusOf(serviceId: string): ServiceStatus {
