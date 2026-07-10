@@ -32,7 +32,7 @@ export async function stopProcessTree(
   const graceMs = Math.max(0, opts.graceMs ?? 5000);
 
   if (process.platform === "win32") {
-    return stopWindowsTree(pid, graceMs);
+    return stopWindowsTree(pid);
   }
   return stopUnixTree(pid, graceMs);
 }
@@ -119,22 +119,12 @@ async function collectUnixDescendants(rootPid: number): Promise<number[]> {
 
 // ─── Windows ──────────────────────────────────────────────────────────────
 
-async function stopWindowsTree(rootPid: number, graceMs: number): Promise<boolean> {
-  // Graceful: taskkill without /F asks the tree to close.
-  await runCommand(["taskkill", "/PID", String(rootPid), "/T"]);
-
-  if (graceMs > 0) {
-    let waited = 0;
-    while (waited < graceMs && isPidAlive(rootPid)) {
-      await delay(POLL_INTERVAL_MS);
-      waited += POLL_INTERVAL_MS;
-    }
-  }
-
-  if (isPidAlive(rootPid)) {
-    await runCommand(["taskkill", "/PID", String(rootPid), "/T", "/F"]);
-    await delay(POLL_INTERVAL_MS);
-  }
-
+async function stopWindowsTree(rootPid: number): Promise<boolean> {
+  // Windows has no working graceful terminate for headless console trees:
+  // `taskkill /T` without /F is rejected for windowless console processes
+  // (node/vite/npm dev servers), so a graceful attempt would only waste the
+  // grace period. Go straight to a forced tree-kill.
+  await runCommand(["taskkill", "/PID", String(rootPid), "/T", "/F"]);
+  await delay(POLL_INTERVAL_MS);
   return !isPidAlive(rootPid);
 }
