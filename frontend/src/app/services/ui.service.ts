@@ -17,6 +17,7 @@ export class UiService {
   private readonly sidebarOpenSignal = signal(false);
   private readonly isMobileSignal = signal(this.getInitialIsMobile());
   private readonly toastSignal = signal<UiToast | null>(null);
+  private readonly terminalPanelHeightSignal = signal<number>(this.getInitialPanelHeight());
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly configOpen = this.configOpenSignal.asReadonly();
@@ -25,6 +26,7 @@ export class UiService {
   readonly sidebarOpen = this.sidebarOpenSignal.asReadonly();
   readonly isMobile = this.isMobileSignal.asReadonly();
   readonly toast = this.toastSignal.asReadonly();
+  readonly terminalPanelHeight = this.terminalPanelHeightSignal.asReadonly();
 
   constructor() {
     this.applyTheme(this.darkModeSignal());
@@ -129,5 +131,23 @@ export class UiService {
     }
 
     this.toastSignal.set(null);
+  }
+
+  private getInitialPanelHeight(): number {
+    if (typeof localStorage === 'undefined') return 288;
+    const stored = Number(localStorage.getItem('dev-pagghiaro-panel-height'));
+    return Number.isFinite(stored) && stored > 0 ? this.clampHeight(stored) : 288;
+  }
+
+  private clampHeight(px: number): number {
+    return Math.min(800, Math.max(120, Math.round(px)));
+  }
+
+  setTerminalPanelHeight(px: number): void {
+    const clamped = this.clampHeight(px);
+    this.terminalPanelHeightSignal.set(clamped);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('dev-pagghiaro-panel-height', String(clamped));
+    }
   }
 }
