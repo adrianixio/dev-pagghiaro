@@ -4,21 +4,32 @@ import {
   Activity,
   ArrowRight,
   ArrowDownToLine,
+  ChevronDown,
+  ChevronRight,
+  Columns2,
+  ExternalLink,
   Folder,
+  FolderPlus,
   GripVertical,
   HardDrive,
   ListOrdered,
   LucideAngularModule,
+  Maximize2,
+  Menu,
+  Minimize2,
+  Moon,
+  Pin,
   Play,
+  PlugZap,
   Plus,
   RefreshCw,
+  RotateCw,
   Save,
   Search,
-  Sun,
-  Moon,
   Server,
   Settings,
   Square,
+  Sun,
   Terminal,
   Trash2,
   X,
@@ -31,7 +42,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     importProvidersFrom(
       LucideAngularModule.pick({
-        Folder, Settings, Terminal, Activity, Play, Square, Server, HardDrive, Trash2, ArrowDownToLine, ArrowRight, X, Search, Save, RefreshCw, Plus, Sun, Moon, GripVertical, ListOrdered
+        Activity, ArrowDownToLine, ArrowRight, ChevronDown, ChevronRight, Columns2, ExternalLink, Folder, FolderPlus, GripVertical, HardDrive, ListOrdered, Maximize2, Menu, Minimize2, Moon, Pin, Play, PlugZap, Plus, RefreshCw, RotateCw, Save, Search, Server, Settings, Square, Sun, Terminal, Trash2, X
       })
     )
   ]
