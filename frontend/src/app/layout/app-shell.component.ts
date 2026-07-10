@@ -1,0 +1,65 @@
+import { Component, HostListener, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IconRailComponent } from './icon-rail.component';
+import { SidebarComponent } from './sidebar.component';
+import { ToolbarComponent } from './toolbar.component';
+import { ServiceListComponent } from '../dashboard/service-list.component';
+import { TerminalPanelComponent } from '../terminal/terminal-panel.component';
+import { FloatingTerminalComponent } from '../terminal/floating-terminal.component';
+import { CommandPaletteComponent } from '../components/command-palette/command-palette.component';
+import { ConfigFormComponent } from '../components/config-form/config-form.component';
+import { UiService } from '../services/ui.service';
+import { ProjectService } from '../services/project.service';
+import { TerminalManager } from '../terminal/terminal-manager.service';
+import { ServiceStatus } from '../models/project.model';
+
+@Component({
+  selector: 'app-shell',
+  standalone: true,
+  imports: [CommonModule, IconRailComponent, SidebarComponent, ToolbarComponent, ServiceListComponent,
+    TerminalPanelComponent, FloatingTerminalComponent, CommandPaletteComponent, ConfigFormComponent],
+  template: `
+    <div class="flex h-screen w-screen overflow-hidden bg-surface font-sans text-content dark:bg-rustic-900 dark:text-rustic-100">
+      @if (ui.isMobile() && ui.sidebarOpen()) {
+        <button type="button" class="fixed inset-0 z-30 bg-rustic-950/50 md:hidden" (click)="ui.closeSidebar()" aria-label="Close sidebar"></button>
+      }
+      <app-icon-rail class="hidden md:flex"></app-icon-rail>
+      <app-sidebar></app-sidebar>
+      <main class="shell-main relative flex min-w-0 flex-1 flex-col">
+        <app-toolbar></app-toolbar>
+        <app-service-list></app-service-list>
+        <app-terminal-panel></app-terminal-panel>
+        <div class="pointer-events-none absolute inset-0 z-20">
+          @for (t of mgr.floatingTerminals(); track t.serviceId) {
+            <app-floating-terminal [terminal]="t" [status]="statusOf(t.serviceId)"></app-floating-terminal>
+          }
+        </div>
+      </main>
+      <app-command-palette></app-command-palette>
+      @if (ui.configOpen()) { <app-config-form></app-config-form> }
+      @if (ui.toast(); as toast) {
+        <div class="fixed right-4 top-4 z-[70] w-full max-w-sm rounded-xl border px-4 py-3 shadow-float"
+          [class]="toast.tone === 'success' ? 'border-accent/30 bg-accent/12 text-accent' : 'border-danger/30 bg-danger/12 text-danger'">
+          <div class="text-sm font-bold uppercase tracking-wide">{{ toast.title }}</div>
+          <div class="mt-1 text-sm text-content dark:text-rustic-200">{{ toast.message }}</div>
+        </div>
+      }
+    </div>
+  `,
+})
+export class AppShellComponent {
+  readonly ui = inject(UiService);
+  readonly mgr = inject(TerminalManager);
+  private readonly projectService = inject(ProjectService);
+
+  statusOf(serviceId: string): ServiceStatus {
+    for (const p of this.projectService.projects()) {
+      const s = p.services.find((svc) => svc.id === serviceId);
+      if (s) return s.status;
+    }
+    return 'running';
+  }
+
+  @HostListener('document:keydown.escape')
+  onEsc(): void { if (this.ui.isMobile() && this.ui.sidebarOpen()) this.ui.closeSidebar(); }
+}
