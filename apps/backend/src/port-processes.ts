@@ -154,7 +154,7 @@ async function killPidUnix(pid: number): Promise<{ ok: boolean; reason: string }
   return { ok: false, reason: 'process is still alive after SIGKILL' };
 }
 
-function isPidAlive(pid: number): boolean {
+export function isPidAlive(pid: number): boolean {
   try {
     process.kill(pid, 0);
     return true;
@@ -172,7 +172,7 @@ function extractPort(address: string): number | null {
   return Number.isInteger(value) ? value : null;
 }
 
-async function runCommand(command: string[]): Promise<CommandResult> {
+export async function runCommand(command: string[]): Promise<CommandResult> {
   try {
     const proc = Bun.spawn(command, {
       stdin: 'ignore',
