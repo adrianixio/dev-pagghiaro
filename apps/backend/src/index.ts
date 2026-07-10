@@ -2,8 +2,6 @@ import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Elysia } from 'elysia';
 import { getProjects } from './config-store';
-import { metricsCollector } from './metrics-collector';
-import { processManager } from './process-manager';
 import { gracefulShutdown } from './shutdown';
 import { autoStartProjectServices } from './project-execution';
 import { projectsRouter } from './routes/projects';
