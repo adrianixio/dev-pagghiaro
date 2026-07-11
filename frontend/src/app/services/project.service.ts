@@ -327,6 +327,11 @@ export class ProjectService {
           cwd: service.cwd,
           port: service.port ?? null,
           autoStart: service.autoStart,
+          healthCheck: {
+            enabled: service.healthCheckEnabled,
+            path: service.healthCheckPath || '/',
+            intervalMs: Math.max(0, Math.floor(service.healthCheckIntervalMs || 10000)),
+          },
           });
         } else {
           const createdService = await this.createService(projectId, {
@@ -335,6 +340,11 @@ export class ProjectService {
             cwd: service.cwd,
             port: service.port ?? null,
             autoStart: service.autoStart,
+            healthCheck: {
+              enabled: service.healthCheckEnabled,
+              path: service.healthCheckPath || '/',
+              intervalMs: Math.max(0, Math.floor(service.healthCheckIntervalMs || 10000)),
+            },
           });
           retainedIds.add(createdService.id);
           serviceIdByDraftKey.set(service.draftKey, createdService.id);
