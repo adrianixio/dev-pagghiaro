@@ -11,6 +11,7 @@ export interface ServiceConfig {
   color?: string;
   healthCheck?: HealthCheckConfig;
   httpInspect?: HttpInspectConfig;
+  debug?: DebugConfig;
 }
 
 export interface ProjectConfig {
@@ -221,4 +222,18 @@ export interface HttpExchange {
 export interface HttpInspectConfig {
   enabled?: boolean;
   proxyPort?: number;
+}
+
+export interface DebugConfig {
+  enabled?: boolean;
+  port?: number;
+}
+
+export interface DebugInfo {
+  enabled: boolean;
+  port: number;
+  platform: string;
+  breakInSupported: boolean;
+  listening: boolean;
+  wsUrl?: string;
 }
