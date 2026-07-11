@@ -336,6 +336,10 @@ export class ProjectService {
             enabled: service.httpInspectEnabled,
             ...(service.httpInspectProxyPort != null ? { proxyPort: Math.max(0, Math.floor(service.httpInspectProxyPort)) } : {}),
           },
+          debug: {
+            enabled: service.debugEnabled,
+            ...(service.debugPort != null ? { port: Math.max(0, Math.floor(service.debugPort)) } : {}),
+          },
           });
         } else {
           const createdService = await this.createService(projectId, {
@@ -352,6 +356,10 @@ export class ProjectService {
             httpInspect: {
               enabled: service.httpInspectEnabled,
               ...(service.httpInspectProxyPort != null ? { proxyPort: Math.max(0, Math.floor(service.httpInspectProxyPort)) } : {}),
+            },
+            debug: {
+              enabled: service.debugEnabled,
+              ...(service.debugPort != null ? { port: Math.max(0, Math.floor(service.debugPort)) } : {}),
             },
           });
           retainedIds.add(createdService.id);
