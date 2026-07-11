@@ -82,6 +82,7 @@ export class AppShellComponent {
         openConfig: (id) => this.ui.openConfig(id),
         openLogs: (p) => this.ui.openLogs(p),
         inspectService: (p, s) => this.ui.openIntrospect(p, s),
+        httpInspect: (p, s) => this.ui.openHttpInspect(p, s),
       });
       this.palette.clearCommands();
       this.palette.registerCommands(cmds);
