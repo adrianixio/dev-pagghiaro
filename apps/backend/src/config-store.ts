@@ -52,6 +52,21 @@ function isHealthCheckConfig(value: unknown): boolean {
   );
 }
 
+function isHttpInspectConfig(value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const c = value as Record<string, unknown>;
+  return (
+    (c['enabled'] === undefined || typeof c['enabled'] === 'boolean') &&
+    (c['proxyPort'] === undefined ||
+      (typeof c['proxyPort'] === 'number' && Number.isFinite(c['proxyPort']) && c['proxyPort'] >= 0))
+  );
+}
+
 export function isServiceConfig(value: unknown): value is ServiceConfig {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -67,7 +82,8 @@ export function isServiceConfig(value: unknown): value is ServiceConfig {
     (candidate.autoStart === undefined || typeof candidate.autoStart === 'boolean') &&
     (candidate.port === undefined || typeof candidate.port === 'number') &&
     (candidate.color === undefined || typeof candidate.color === 'string') &&
-    isHealthCheckConfig((candidate as { healthCheck?: unknown }).healthCheck)
+    isHealthCheckConfig((candidate as { healthCheck?: unknown }).healthCheck) &&
+    isHttpInspectConfig((candidate as { httpInspect?: unknown }).httpInspect)
   );
 }
 
