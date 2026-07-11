@@ -27,7 +27,8 @@ import { UiProject, UiService as UiServiceModel } from '../models/project.model'
             (stop)="projectService.stopService(project.id, service.id)"
             (restart)="projectService.restartService(project.id, service.id)"
             (openTerminal)="mgr.open(project.id, service.id, service.name)"
-            (killPort)="killPort(project.id, service)">
+            (killPort)="killPort(project.id, service)"
+            (inspect)="ui.openIntrospect(project.id, service.id)">
           </app-service-row>
         }
       </div>
@@ -39,7 +40,7 @@ import { UiProject, UiService as UiServiceModel } from '../models/project.model'
 export class ServiceListComponent {
   readonly projectService = inject(ProjectService);
   readonly mgr = inject(TerminalManager);
-  private readonly ui = inject(UiService);
+  readonly ui = inject(UiService);
   private readonly expandedIdSignal = signal<string | null>(null);
   readonly expandedId = this.expandedIdSignal.asReadonly();
 

@@ -5,6 +5,7 @@ import {
   CreateServiceBody,
   KillPortResult,
   ProjectConfig,
+  ServiceHealth,
   ServiceMetrics as SharedServiceMetrics,
   ServiceState,
   UpdateProjectBody,
@@ -117,6 +118,21 @@ export class ProjectService {
     );
   }
 
+  updateServiceHealth(projectId: string, serviceId: string, health: ServiceHealth): void {
+    this.projectsSignal.update((projects) =>
+      projects.map((project) =>
+        project.id !== projectId
+          ? project
+          : {
+              ...project,
+              services: project.services.map((service) =>
+                service.id === serviceId ? { ...service, health } : service
+              ),
+            }
+      )
+    );
+  }
+
   async fetchServiceState(projectId: string, serviceId: string): Promise<void> {
     try {
       const response = await fetch(`${API_BASE}/projects/${projectId}/services/${serviceId}/state`);
@@ -125,6 +141,9 @@ export class ProjectService {
       }
       const state = (await response.json()) as ServiceState;
       this.updateServiceStatus(projectId, serviceId, state.status);
+      if (state.health) {
+        this.updateServiceHealth(projectId, serviceId, state.health);
+      }
     } catch (error) {
       console.error(`Error fetching state for service ${serviceId}:`, error);
     }
