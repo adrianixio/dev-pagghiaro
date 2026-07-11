@@ -9,6 +9,7 @@ import {
   updateService,
 } from '../config-store';
 import { logBus } from '../log-bus';
+import { healthMonitor } from '../health-monitor';
 import { metricsCollector } from '../metrics-collector';
 import { killProcessesListeningOnPort } from '../port-processes';
 import { processManager } from '../process-manager';
@@ -164,13 +165,13 @@ export const servicesRouter = new Elysia()
     return { serviceId: params.serviceId, clearedAt: timestamp };
   })
   .get(`${BASE}/:serviceId/state`, ({ params }) => {
-    return (
+    const state =
       processManager.getState(params.serviceId) ?? {
         serviceId: params.serviceId,
         projectId: params.projectId,
         status: 'stopped' as const,
-      }
-    );
+      };
+    return { ...state, health: healthMonitor.getHealth(params.serviceId) };
   })
   .get(`${BASE}/:serviceId/metrics`, ({ params, set }) => {
     const metrics = metricsCollector.getLatest(params.serviceId);
