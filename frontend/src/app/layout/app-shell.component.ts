@@ -9,6 +9,7 @@ import { FloatingTerminalComponent } from '../terminal/floating-terminal.compone
 import { CommandPaletteComponent } from '../components/command-palette/command-palette.component';
 import { ConfigFormComponent } from '../components/config-form/config-form.component';
 import { LogsPanelComponent } from '../logs/logs-panel.component';
+import { IntrospectionPanelComponent } from '../diagnostics/introspection-panel.component';
 import { UiService } from '../services/ui.service';
 import { ProjectService } from '../services/project.service';
 import { TerminalManager } from '../terminal/terminal-manager.service';
@@ -20,7 +21,8 @@ import { buildCommands } from '../services/command-registry';
   selector: 'app-shell',
   standalone: true,
   imports: [CommonModule, IconRailComponent, SidebarComponent, ToolbarComponent, ServiceListComponent,
-    TerminalPanelComponent, FloatingTerminalComponent, CommandPaletteComponent, ConfigFormComponent, LogsPanelComponent],
+    TerminalPanelComponent, FloatingTerminalComponent, CommandPaletteComponent, ConfigFormComponent, LogsPanelComponent,
+    IntrospectionPanelComponent],
   template: `
     <div class="flex h-screen w-screen overflow-hidden bg-surface font-sans text-content dark:bg-rustic-900 dark:text-rustic-100">
       @if (ui.isMobile() && ui.sidebarOpen()) {
@@ -41,6 +43,7 @@ import { buildCommands } from '../services/command-registry';
       <app-command-palette></app-command-palette>
       @if (ui.configOpen()) { <app-config-form></app-config-form> }
       @if (ui.logsOpen()) { <app-logs-panel /> }
+      @if (ui.introspectTarget()) { <app-introspection-panel /> }
       @if (ui.toast(); as toast) {
         <div class="fixed right-4 top-4 z-[70] w-full max-w-sm rounded-xl border px-4 py-3 shadow-float"
           [class]="toast.tone === 'success' ? 'border-accent/30 bg-accent/12 text-accent' : 'border-danger/30 bg-danger/12 text-danger'">
