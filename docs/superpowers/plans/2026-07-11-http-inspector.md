@@ -145,7 +145,7 @@ import type { HttpCapturedBody, HttpHeader } from '@dev-pagghiaro/shared';
 
 export const HTTP_BODY_CAP_BYTES = 64 * 1024;
 
-const TEXTUAL = /^(text\/|application\/(json|xml|javascript|x-www-form-urlencoded|graphql)|application\/[a-z0-9.+-]*\+(json|xml))$/i;
+const TEXTUAL = /^(text\/[a-z0-9.+-]*|application\/(json|xml|javascript|x-www-form-urlencoded|graphql)|application\/[a-z0-9.+-]*\+(json|xml))$/i;
 
 export function isTextualContentType(contentType: string | null): boolean {
   if (!contentType) return false;
