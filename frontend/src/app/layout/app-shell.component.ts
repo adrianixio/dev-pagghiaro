@@ -75,6 +75,7 @@ export class AppShellComponent {
         toggleDarkMode: () => this.ui.toggleDarkMode(),
         openNewProject: () => this.ui.openNewProject(),
         openConfig: (id) => this.ui.openConfig(id),
+        openLogs: (p) => this.ui.openLogs(p),
       });
       this.palette.clearCommands();
       this.palette.registerCommands(cmds);

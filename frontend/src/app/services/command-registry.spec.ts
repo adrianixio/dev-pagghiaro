@@ -11,6 +11,7 @@ describe('buildCommands', () => {
     restartAllServices: () => {}, reloadProjectContext: () => {},
     openTerminal: () => {}, toggleDarkMode: () => {}, openNewProject: () => {},
     openConfig: () => {},
+    openLogs: () => {},
   };
 
   it('includes a switch command per project and actions per service', () => {
@@ -20,5 +21,6 @@ describe('buildCommands', () => {
     expect(cmds.some((c) => c.id === 'terminal:s1')).toBeTrue();
     expect(cmds.some((c) => c.id === 'edit:p1')).toBeTrue();
     expect(cmds.some((c) => c.id === 'toggle-theme')).toBeTrue();
+    expect(cmds.some((c) => c.id === 'open-logs')).toBeTrue();
   });
 });

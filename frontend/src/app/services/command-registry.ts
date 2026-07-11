@@ -17,6 +17,7 @@ export interface CommandDeps {
   toggleDarkMode: () => void;
   openNewProject: () => void;
   openConfig: (projectId: string) => void;
+  openLogs: (projectId: string) => void;
 }
 
 export function buildCommands(d: CommandDeps): Command[] {
@@ -32,6 +33,7 @@ export function buildCommands(d: CommandDeps): Command[] {
       { id: 'stop-all', title: 'Stop all services', icon: 'square', action: () => d.stopAllServices(active.id) },
       { id: 'restart-all', title: 'Restart all services', icon: 'refresh-cw', action: () => d.restartAllServices(active.id) },
       { id: 'reload-context', title: 'Reload project context', icon: 'rotate-cw', action: () => d.reloadProjectContext(active.id) },
+      { id: 'open-logs', title: 'Open logs', icon: 'scroll-text', action: () => d.openLogs(active.id) },
     );
     for (const s of active.services) {
       cmds.push(
