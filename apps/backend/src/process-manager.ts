@@ -11,6 +11,7 @@ import type { ServiceConfig, ServiceState, ServiceStatus } from "@dev-pagghiaro/
 import { spawnPty } from "./pty-adapter";
 import type { PtyHandle, PtySize } from "./pty-adapter";
 import { logBus } from "./log-bus";
+import { logStore } from "./log-store";
 import { metricsCollector } from "./metrics-collector";
 import { killProcessesListeningOnPort } from "./port-processes";
 import { stopProcessTree, isPidAlive } from "./process-tree";
@@ -89,6 +90,8 @@ export const processManager = {
     projectRootPath: string,
     initialSize?: PtySize
   ): Promise<ServiceState> {
+    logStore.attach(service.id, projectId);
+
     // Idempotent: if already running, return current state
     const existing = processes.get(service.id);
     if (existing) {
