@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, importProvidersFrom } from '@angular/core';
-import { Activity, ArrowLeftRight, ChevronDown, ChevronRight, LucideAngularModule, Play, PlugZap, RotateCw, Square, Terminal } from 'lucide-angular';
+import { Activity, ArrowLeftRight, Bug, ChevronDown, ChevronRight, LucideAngularModule, Play, PlugZap, RotateCw, Square, Terminal } from 'lucide-angular';
 import { ServiceRowComponent } from './service-row.component';
 import { UiService } from '../models/project.model';
 
@@ -15,7 +15,7 @@ class Host { svc = svc; acted = ''; }
 describe('ServiceRowComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [importProvidersFrom(LucideAngularModule.pick({ Activity, ArrowLeftRight, ChevronDown, ChevronRight, Play, RotateCw, Square, Terminal, PlugZap }))],
+      providers: [importProvidersFrom(LucideAngularModule.pick({ Activity, ArrowLeftRight, Bug, ChevronDown, ChevronRight, Play, RotateCw, Square, Terminal, PlugZap }))],
     });
   });
 
