@@ -21,6 +21,13 @@ const CreateServiceSchema = t.Object({
   autoStart: t.Optional(t.Boolean()),
   port: t.Optional(t.Nullable(t.Number())),
   color: t.Optional(t.String()),
+  healthCheck: t.Optional(
+    t.Object({
+      enabled: t.Optional(t.Boolean()),
+      path: t.Optional(t.String()),
+      intervalMs: t.Optional(t.Number({ minimum: 0 })),
+    })
+  ),
 });
 
 const UpdateServiceSchema = t.Object({
@@ -31,6 +38,13 @@ const UpdateServiceSchema = t.Object({
   autoStart: t.Optional(t.Boolean()),
   port: t.Optional(t.Nullable(t.Number())),
   color: t.Optional(t.String()),
+  healthCheck: t.Optional(
+    t.Object({
+      enabled: t.Optional(t.Boolean()),
+      path: t.Optional(t.String()),
+      intervalMs: t.Optional(t.Number({ minimum: 0 })),
+    })
+  ),
 });
 
 const BASE = '/api/projects/:projectId/services';
@@ -63,6 +77,7 @@ export const servicesRouter = new Elysia()
         ...(payload.autoStart !== undefined ? { autoStart: payload.autoStart } : {}),
         ...(payload.port != null ? { port: payload.port } : {}),
         ...(payload.color !== undefined ? { color: payload.color } : {}),
+        ...(payload.healthCheck !== undefined ? { healthCheck: payload.healthCheck } : {}),
       };
 
       const created = await addService(params.projectId, service);

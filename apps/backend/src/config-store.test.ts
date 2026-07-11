@@ -1,0 +1,16 @@
+import { test, expect } from 'bun:test';
+import { isServiceConfig } from './config-store';
+
+const base = { id: 's', name: 'S', command: 'true', cwd: '.' };
+
+test('accepts a service with a valid healthCheck', () => {
+  expect(isServiceConfig({ ...base, healthCheck: { enabled: true, path: '/health', intervalMs: 5000 } })).toBe(true);
+  expect(isServiceConfig({ ...base, healthCheck: {} })).toBe(true);
+  expect(isServiceConfig(base)).toBe(true); // healthCheck optional
+});
+
+test('rejects a malformed healthCheck', () => {
+  expect(isServiceConfig({ ...base, healthCheck: { enabled: 'yes' } })).toBe(false);
+  expect(isServiceConfig({ ...base, healthCheck: { intervalMs: -1 } })).toBe(false);
+  expect(isServiceConfig({ ...base, healthCheck: 'nope' })).toBe(false);
+});

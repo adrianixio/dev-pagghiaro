@@ -36,7 +36,23 @@ function isStringRecord(value: unknown): value is Record<string, string> {
   return Object.values(value).every((entry) => typeof entry === 'string');
 }
 
-function isServiceConfig(value: unknown): value is ServiceConfig {
+function isHealthCheckConfig(value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const c = value as Record<string, unknown>;
+  return (
+    (c['enabled'] === undefined || typeof c['enabled'] === 'boolean') &&
+    (c['path'] === undefined || typeof c['path'] === 'string') &&
+    (c['intervalMs'] === undefined ||
+      (typeof c['intervalMs'] === 'number' && Number.isFinite(c['intervalMs']) && c['intervalMs'] >= 0))
+  );
+}
+
+export function isServiceConfig(value: unknown): value is ServiceConfig {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
@@ -50,7 +66,8 @@ function isServiceConfig(value: unknown): value is ServiceConfig {
     isStringRecord(candidate.env) &&
     (candidate.autoStart === undefined || typeof candidate.autoStart === 'boolean') &&
     (candidate.port === undefined || typeof candidate.port === 'number') &&
-    (candidate.color === undefined || typeof candidate.color === 'string')
+    (candidate.color === undefined || typeof candidate.color === 'string') &&
+    isHealthCheckConfig((candidate as { healthCheck?: unknown }).healthCheck)
   );
 }
 
