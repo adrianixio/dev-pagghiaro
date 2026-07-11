@@ -79,6 +79,7 @@ export class AppShellComponent {
         openNewProject: () => this.ui.openNewProject(),
         openConfig: (id) => this.ui.openConfig(id),
         openLogs: (p) => this.ui.openLogs(p),
+        inspectService: (p, s) => this.ui.openIntrospect(p, s),
       });
       this.palette.clearCommands();
       this.palette.registerCommands(cmds);
