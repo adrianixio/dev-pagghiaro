@@ -39,9 +39,12 @@ async function handleHttp(serviceId: string, targetPort: number, req: Request): 
     };
     exchange.response = response;
     httpCaptureStore.add(exchange);
+    const clientHeaders = stripHopByHop(res.headers);
+    clientHeaders.delete('content-encoding');
+    clientHeaders.delete('content-length');
     return new Response(resBytes.length > 0 ? resBytes : null, {
       status: res.status,
-      headers: stripHopByHop(res.headers),
+      headers: clientHeaders,
     });
   } catch (err) {
     exchange.error = err instanceof Error ? err.message : String(err);

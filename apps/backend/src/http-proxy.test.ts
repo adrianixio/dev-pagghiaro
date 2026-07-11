@@ -44,6 +44,24 @@ test('forwards HTTP and captures the exchange, then stop frees the port', async 
   }
 });
 
+test('delivers a gzip-compressed target response intact', async () => {
+  const target = Bun.serve({
+    port: 0,
+    fetch: () => new Response(Bun.gzipSync(new TextEncoder().encode('hello world')), {
+      headers: { 'content-encoding': 'gzip', 'content-type': 'text/plain' },
+    }),
+  });
+  const proxyPort = freePort();
+  proxyManager.start('gz', { proxyPort, targetPort: target.port });
+  try {
+    const res = await fetch(`http://127.0.0.1:${proxyPort}/`);
+    expect(await res.text()).toBe('hello world'); // would be garbage if content-encoding were forwarded
+  } finally {
+    proxyManager.stop('gz');
+    target.stop(true);
+  }
+});
+
 test('start is idempotent', () => {
   const proxyPort = freePort();
   const targetPort = freePort();
