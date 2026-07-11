@@ -13,6 +13,8 @@ export interface UiToast {
 export class UiService {
   private readonly configOpenSignal = signal(false);
   private readonly editingProjectIdSignal = signal<string | null>(null);
+  private readonly logsOpenSignal = signal(false);
+  private readonly logsProjectIdSignal = signal<string | null>(null);
   private readonly darkModeSignal = signal<boolean>(this.getInitialDarkMode());
   private readonly sidebarOpenSignal = signal(false);
   private readonly isMobileSignal = signal(this.getInitialIsMobile());
@@ -22,6 +24,8 @@ export class UiService {
 
   readonly configOpen = this.configOpenSignal.asReadonly();
   readonly editingProjectId = this.editingProjectIdSignal.asReadonly();
+  readonly logsOpen = this.logsOpenSignal.asReadonly();
+  readonly logsProjectId = this.logsProjectIdSignal.asReadonly();
   readonly darkMode = this.darkModeSignal.asReadonly();
   readonly sidebarOpen = this.sidebarOpenSignal.asReadonly();
   readonly isMobile = this.isMobileSignal.asReadonly();
@@ -93,6 +97,15 @@ export class UiService {
 
   closeConfig(): void {
     this.configOpenSignal.set(false);
+  }
+
+  openLogs(projectId: string): void {
+    this.logsProjectIdSignal.set(projectId);
+    this.logsOpenSignal.set(true);
+  }
+
+  closeLogs(): void {
+    this.logsOpenSignal.set(false);
   }
 
   openSidebar(): void {
