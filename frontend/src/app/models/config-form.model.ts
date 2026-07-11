@@ -10,6 +10,8 @@ export interface EditableServiceDraft {
   healthCheckEnabled: boolean;
   healthCheckPath: string;
   healthCheckIntervalMs: number;
+  httpInspectEnabled: boolean;
+  httpInspectProxyPort: number | null;
 }
 
 export interface ProjectDraft {
