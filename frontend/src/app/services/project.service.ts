@@ -332,6 +332,10 @@ export class ProjectService {
             path: service.healthCheckPath || '/',
             intervalMs: Math.max(0, Math.floor(service.healthCheckIntervalMs || 10000)),
           },
+          httpInspect: {
+            enabled: service.httpInspectEnabled,
+            ...(service.httpInspectProxyPort != null ? { proxyPort: Math.max(0, Math.floor(service.httpInspectProxyPort)) } : {}),
+          },
           });
         } else {
           const createdService = await this.createService(projectId, {
@@ -344,6 +348,10 @@ export class ProjectService {
               enabled: service.healthCheckEnabled,
               path: service.healthCheckPath || '/',
               intervalMs: Math.max(0, Math.floor(service.healthCheckIntervalMs || 10000)),
+            },
+            httpInspect: {
+              enabled: service.httpInspectEnabled,
+              ...(service.httpInspectProxyPort != null ? { proxyPort: Math.max(0, Math.floor(service.httpInspectProxyPort)) } : {}),
             },
           });
           retainedIds.add(createdService.id);

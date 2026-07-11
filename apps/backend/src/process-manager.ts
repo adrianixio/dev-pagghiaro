@@ -14,6 +14,7 @@ import { logBus } from "./log-bus";
 import { logStore } from "./log-store";
 import { metricsCollector } from "./metrics-collector";
 import { healthMonitor } from "./health-monitor";
+import { proxyManager } from "./http-proxy";
 import { killProcessesListeningOnPort } from "./port-processes";
 import { stopProcessTree, isPidAlive } from "./process-tree";
 import { buildServiceProcessContext } from "./process-context";
@@ -178,6 +179,13 @@ export const processManager = {
       });
     }
 
+    if (service.httpInspect?.enabled === true && service.port != null) {
+      proxyManager.start(service.id, {
+        proxyPort: service.httpInspect.proxyPort ?? service.port + 10000,
+        targetPort: service.port,
+      });
+    }
+
     // Forward PTY output to the log bus
     pty.onData((chunk) => {
       logBus.emit(service.id, chunk);
@@ -187,6 +195,7 @@ export const processManager = {
     void pty.exited.then((code) => {
       metricsCollector.untrack(service.id);
       healthMonitor.untrack(service.id);
+      proxyManager.stop(service.id);
       processes.delete(service.id);
       const intentional = stopping.has(service.id);
       const status = intentional || code === 0 ? "stopped" : "error";
@@ -242,6 +251,7 @@ export const processManager = {
 
     metricsCollector.untrack(serviceId);
     healthMonitor.untrack(serviceId);
+    proxyManager.stop(serviceId);
     processes.delete(serviceId);
 
     // If the tree is still alive after force-kill AND the port fallback, report

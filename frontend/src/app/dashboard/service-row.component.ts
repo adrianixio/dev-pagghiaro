@@ -32,6 +32,7 @@ import { UiService } from '../models/project.model';
           <ui-icon-button icon="square" label="Stop" tone="danger" (click)="stop.emit()"></ui-icon-button>
           <span data-action="open-terminal" class="contents"><ui-icon-button icon="terminal" label="Open terminal" tone="info" (click)="openTerminal.emit()"></ui-icon-button></span>
           <ui-icon-button icon="activity" label="Inspect" tone="info" (click)="inspect.emit()"></ui-icon-button>
+          <ui-icon-button icon="arrow-left-right" label="HTTP inspector" tone="info" (click)="httpInspect.emit()"></ui-icon-button>
           <ui-icon-button icon="plug-zap" label="Kill port" (click)="killPort.emit()"></ui-icon-button>
         </div>
       </div>
@@ -49,6 +50,7 @@ export class ServiceRowComponent {
   @Output() openTerminal = new EventEmitter<void>();
   @Output() killPort = new EventEmitter<void>();
   @Output() inspect = new EventEmitter<void>();
+  @Output() httpInspect = new EventEmitter<void>();
 
   healthDotClass(): string {
     switch (this.service.health?.state) {

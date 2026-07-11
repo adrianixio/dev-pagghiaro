@@ -10,6 +10,7 @@ export interface ServiceConfig {
   port?: number | null;
   color?: string;
   healthCheck?: HealthCheckConfig;
+  httpInspect?: HttpInspectConfig;
 }
 
 export interface ProjectConfig {
@@ -180,4 +181,44 @@ export interface ServiceIntrospection {
   port: PortInfo | null;
   runtime: ServiceRuntimeInfo;
   health: ServiceHealth;
+}
+
+export type HttpExchangeSource = 'proxy' | 'console';
+
+export interface HttpHeader { name: string; value: string; }
+
+export interface HttpCapturedBody {
+  text?: string;
+  truncated?: boolean;
+  binary?: boolean;
+  byteLength?: number;
+}
+
+export interface HttpRequestRecord {
+  method: string;
+  path: string;
+  headers: HttpHeader[];
+  body?: HttpCapturedBody;
+}
+
+export interface HttpResponseRecord {
+  status: number;
+  headers: HttpHeader[];
+  body?: HttpCapturedBody;
+  durationMs: number;
+}
+
+export interface HttpExchange {
+  id: string;
+  serviceId: string;
+  source: HttpExchangeSource;
+  startedAt: number;
+  request: HttpRequestRecord;
+  response?: HttpResponseRecord;
+  error?: string;
+}
+
+export interface HttpInspectConfig {
+  enabled?: boolean;
+  proxyPort?: number;
 }

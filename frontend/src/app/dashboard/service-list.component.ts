@@ -28,7 +28,8 @@ import { UiProject, UiService as UiServiceModel } from '../models/project.model'
             (restart)="projectService.restartService(project.id, service.id)"
             (openTerminal)="mgr.open(project.id, service.id, service.name)"
             (killPort)="killPort(project.id, service)"
-            (inspect)="ui.openIntrospect(project.id, service.id)">
+            (inspect)="ui.openIntrospect(project.id, service.id)"
+            (httpInspect)="ui.openHttpInspect(project.id, service.id)">
           </app-service-row>
         }
       </div>

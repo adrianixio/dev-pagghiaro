@@ -19,6 +19,7 @@ export interface CommandDeps {
   openConfig: (projectId: string) => void;
   openLogs: (projectId: string) => void;
   inspectService: (projectId: string, serviceId: string) => void;
+  httpInspect: (projectId: string, serviceId: string) => void;
 }
 
 export function buildCommands(d: CommandDeps): Command[] {
@@ -44,6 +45,7 @@ export function buildCommands(d: CommandDeps): Command[] {
         { id: `terminal:${s.id}`, title: `Open terminal: ${s.name}`, icon: 'terminal', action: () => d.openTerminal(active.id, s.id, s.name) },
         { id: `killport:${s.id}`, title: `Kill port: ${s.name}`, icon: 'plug-zap', action: () => d.killServicePort(active.id, s.id) },
         { id: `inspect:${s.id}`, title: `Inspect ${s.name}`, icon: 'activity', action: () => d.inspectService(active.id, s.id) },
+        { id: `http:${s.id}`, title: `HTTP inspector: ${s.name}`, icon: 'arrow-left-right', action: () => d.httpInspect(active.id, s.id) },
       );
     }
   }

@@ -14,3 +14,11 @@ test('rejects a malformed healthCheck', () => {
   expect(isServiceConfig({ ...base, healthCheck: { intervalMs: -1 } })).toBe(false);
   expect(isServiceConfig({ ...base, healthCheck: 'nope' })).toBe(false);
 });
+
+test('accepts a valid httpInspect and rejects a malformed one', () => {
+  expect(isServiceConfig({ ...base, httpInspect: { enabled: true, proxyPort: 13000 } })).toBe(true);
+  expect(isServiceConfig({ ...base, httpInspect: {} })).toBe(true);
+  expect(isServiceConfig(base)).toBe(true); // httpInspect optional
+  expect(isServiceConfig({ ...base, httpInspect: { enabled: 'x' } })).toBe(false);
+  expect(isServiceConfig({ ...base, httpInspect: { proxyPort: -1 } })).toBe(false);
+});
