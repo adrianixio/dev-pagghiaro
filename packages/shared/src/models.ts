@@ -97,3 +97,26 @@ export type WsServerMessage =
   | { type: 'metrics'; payload: ServiceMetrics }
   | { type: 'cleared'; serviceId: string; timestamp: number }
   | { type: 'error'; serviceId: string; message: string };
+
+export type LogSeverity = 'info' | 'warn' | 'error';
+
+export interface StructuredLine {
+  seq: number;         // monotono per servizio, per ordinamento stabile
+  serviceId: string;
+  projectId: string;
+  timestamp: number;
+  raw: string;         // riga con ANSI intatto (rendering)
+  text: string;        // riga con ANSI strippato (ricerca/classificazione)
+  severity: LogSeverity;
+  eventHead: boolean;  // true = prima riga di un evento o riga singola
+  kind: 'log' | 'marker';
+}
+
+export interface LogQuery {
+  serviceIds: string[];   // >1 => merge cross-servizio
+  q?: string;
+  regex?: boolean;
+  severity?: LogSeverity; // soglia minima: >= (info=tutte, error=solo error)
+  since?: number;
+  limit?: number;
+}
