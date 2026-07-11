@@ -20,6 +20,7 @@ export interface CommandDeps {
   openLogs: (projectId: string) => void;
   inspectService: (projectId: string, serviceId: string) => void;
   httpInspect: (projectId: string, serviceId: string) => void;
+  debug: (projectId: string, serviceId: string) => void;
 }
 
 export function buildCommands(d: CommandDeps): Command[] {
@@ -46,6 +47,7 @@ export function buildCommands(d: CommandDeps): Command[] {
         { id: `killport:${s.id}`, title: `Kill port: ${s.name}`, icon: 'plug-zap', action: () => d.killServicePort(active.id, s.id) },
         { id: `inspect:${s.id}`, title: `Inspect ${s.name}`, icon: 'activity', action: () => d.inspectService(active.id, s.id) },
         { id: `http:${s.id}`, title: `HTTP inspector: ${s.name}`, icon: 'arrow-left-right', action: () => d.httpInspect(active.id, s.id) },
+        { id: `debug:${s.id}`, title: `Debug: ${s.name}`, icon: 'bug', action: () => d.debug(active.id, s.id) },
       );
     }
   }
