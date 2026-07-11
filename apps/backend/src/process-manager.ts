@@ -173,7 +173,7 @@ export const processManager = {
     if (service.healthCheck?.enabled === true && service.port != null) {
       healthMonitor.track(service.id, {
         port: service.port,
-        path: service.healthCheck.path ?? '/',
+        path: service.healthCheck.path ?? "/",
         intervalMs: service.healthCheck.intervalMs ?? 10000,
       });
     }
@@ -186,6 +186,7 @@ export const processManager = {
     // Watch for process exit
     void pty.exited.then((code) => {
       metricsCollector.untrack(service.id);
+      healthMonitor.untrack(service.id);
       processes.delete(service.id);
       const intentional = stopping.has(service.id);
       const status = intentional || code === 0 ? "stopped" : "error";
