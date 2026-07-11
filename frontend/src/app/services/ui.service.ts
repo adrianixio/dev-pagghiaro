@@ -16,6 +16,7 @@ export class UiService {
   private readonly logsOpenSignal = signal(false);
   private readonly logsProjectIdSignal = signal<string | null>(null);
   private readonly introspectTargetSignal = signal<{ projectId: string; serviceId: string } | null>(null);
+  private readonly httpInspectTargetSignal = signal<{ projectId: string; serviceId: string } | null>(null);
   private readonly darkModeSignal = signal<boolean>(this.getInitialDarkMode());
   private readonly sidebarOpenSignal = signal(false);
   private readonly isMobileSignal = signal(this.getInitialIsMobile());
@@ -28,6 +29,7 @@ export class UiService {
   readonly logsOpen = this.logsOpenSignal.asReadonly();
   readonly logsProjectId = this.logsProjectIdSignal.asReadonly();
   readonly introspectTarget = this.introspectTargetSignal.asReadonly();
+  readonly httpInspectTarget = this.httpInspectTargetSignal.asReadonly();
   readonly darkMode = this.darkModeSignal.asReadonly();
   readonly sidebarOpen = this.sidebarOpenSignal.asReadonly();
   readonly isMobile = this.isMobileSignal.asReadonly();
@@ -116,6 +118,14 @@ export class UiService {
 
   closeIntrospect(): void {
     this.introspectTargetSignal.set(null);
+  }
+
+  openHttpInspect(projectId: string, serviceId: string): void {
+    this.httpInspectTargetSignal.set({ projectId, serviceId });
+  }
+
+  closeHttpInspect(): void {
+    this.httpInspectTargetSignal.set(null);
   }
 
   openSidebar(): void {
