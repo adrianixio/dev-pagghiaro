@@ -1,5 +1,5 @@
-import { resolve } from 'node:path';
-import type { ProjectConfig, ServiceConfig } from '@dev-pagghiaro/shared';
+import { join, resolve } from 'node:path';
+import type { EnvVarProvenance, ProjectConfig, ServiceConfig } from '@dev-pagghiaro/shared';
 
 const BASE_ENV_FILES = ['.env', '.env.local'];
 const DEFAULT_MODE = 'development';
@@ -22,6 +22,51 @@ export async function buildServiceProcessContext(
 
 export async function reloadProjectProcessContext(project: ProjectConfig): Promise<void> {
   await Promise.all(project.services.map((service) => buildServiceProcessContext(project.rootPath, service)));
+}
+
+async function loadEnvFile(filePath: string): Promise<Record<string, string>> {
+  const file = Bun.file(filePath);
+  if (!(await file.exists())) {
+    return {};
+  }
+  return parseDotEnv(await file.text());
+}
+
+export async function describeServiceEnv(
+  projectRootPath: string,
+  service: ServiceConfig
+): Promise<EnvVarProvenance[]> {
+  const serviceRoot = resolveServiceRoot(projectRootPath, service.cwd);
+  const mode = resolveEnvMode();
+  const fileNames = getEnvFileCandidates(mode);
+
+  // Layers low → high precedence (mirrors buildServiceProcessContext).
+  const layers: Array<{ source: string; env: Record<string, string> }> = [];
+  for (const fileName of fileNames) {
+    layers.push({ source: `project/${fileName}`, env: await loadEnvFile(join(projectRootPath, fileName)) });
+  }
+  if (serviceRoot !== projectRootPath) {
+    for (const fileName of fileNames) {
+      layers.push({ source: `service/${fileName}`, env: await loadEnvFile(join(serviceRoot, fileName)) });
+    }
+  }
+  layers.push({ source: 'service.env', env: service.env ?? {} });
+
+  const map = new Map<string, { value: string; source: string; shadowed: Array<{ source: string; value: string }> }>();
+  for (const layer of layers) {
+    for (const [key, value] of Object.entries(layer.env)) {
+      const existing = map.get(key);
+      if (existing) {
+        existing.shadowed.push({ source: existing.source, value: existing.value });
+        existing.value = value;
+        existing.source = layer.source;
+      } else {
+        map.set(key, { value, source: layer.source, shadowed: [] });
+      }
+    }
+  }
+
+  return [...map.entries()].map(([key, v]) => ({ key, value: v.value, source: v.source, shadowed: v.shadowed }));
 }
 
 function resolveServiceRoot(projectRootPath: string, serviceCwd: string): string {

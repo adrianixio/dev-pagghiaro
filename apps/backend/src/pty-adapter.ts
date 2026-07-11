@@ -169,7 +169,7 @@ async function getProcessTty(pid: number): Promise<string | null> {
   });
 }
 
-function resolveShellArgs(command: string): [string, ...string[]] {
+export function resolveShellArgs(command: string): [string, ...string[]] {
   if (process.platform === 'win32') {
     const comSpec = process.env['ComSpec']?.trim();
     return [comSpec && comSpec.length > 0 ? comSpec : 'cmd.exe', '/d', '/s', '/c', command];

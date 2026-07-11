@@ -7,6 +7,9 @@ export interface EditableServiceDraft {
   port?: number | null;
   autoStart: boolean;
   includeInExecution: boolean;
+  healthCheckEnabled: boolean;
+  healthCheckPath: string;
+  healthCheckIntervalMs: number;
 }
 
 export interface ProjectDraft {

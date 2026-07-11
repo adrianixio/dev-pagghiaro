@@ -13,6 +13,7 @@ import type { PtyHandle, PtySize } from "./pty-adapter";
 import { logBus } from "./log-bus";
 import { logStore } from "./log-store";
 import { metricsCollector } from "./metrics-collector";
+import { healthMonitor } from "./health-monitor";
 import { killProcessesListeningOnPort } from "./port-processes";
 import { stopProcessTree, isPidAlive } from "./process-tree";
 import { buildServiceProcessContext } from "./process-context";
@@ -65,7 +66,7 @@ function setState(
 
 // ─── CWD resolution ───────────────────────────────────────────────────────────
 
-function resolveCwd(serviceCwd: string, projectRootPath: string): string {
+export function resolveCwd(serviceCwd: string, projectRootPath: string): string {
   // Absolute path (Unix /… or Windows C:\…)
   if (serviceCwd.startsWith("/") || /^[A-Za-z]:[\\/]/.test(serviceCwd)) {
     return serviceCwd;
@@ -169,6 +170,14 @@ export const processManager = {
     // Track metrics
     metricsCollector.track(service.id, pty.pid);
 
+    if (service.healthCheck?.enabled === true && service.port != null) {
+      healthMonitor.track(service.id, {
+        port: service.port,
+        path: service.healthCheck.path ?? "/",
+        intervalMs: service.healthCheck.intervalMs ?? 10000,
+      });
+    }
+
     // Forward PTY output to the log bus
     pty.onData((chunk) => {
       logBus.emit(service.id, chunk);
@@ -177,6 +186,7 @@ export const processManager = {
     // Watch for process exit
     void pty.exited.then((code) => {
       metricsCollector.untrack(service.id);
+      healthMonitor.untrack(service.id);
       processes.delete(service.id);
       const intentional = stopping.has(service.id);
       const status = intentional || code === 0 ? "stopped" : "error";
@@ -231,6 +241,7 @@ export const processManager = {
     }
 
     metricsCollector.untrack(serviceId);
+    healthMonitor.untrack(serviceId);
     processes.delete(serviceId);
 
     // If the tree is still alive after force-kill AND the port fallback, report

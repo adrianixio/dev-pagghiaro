@@ -18,6 +18,7 @@ export interface CommandDeps {
   openNewProject: () => void;
   openConfig: (projectId: string) => void;
   openLogs: (projectId: string) => void;
+  inspectService: (projectId: string, serviceId: string) => void;
 }
 
 export function buildCommands(d: CommandDeps): Command[] {
@@ -42,6 +43,7 @@ export function buildCommands(d: CommandDeps): Command[] {
         { id: `restart:${s.id}`, title: `Restart ${s.name}`, icon: 'refresh-cw', action: () => d.restartService(active.id, s.id) },
         { id: `terminal:${s.id}`, title: `Open terminal: ${s.name}`, icon: 'terminal', action: () => d.openTerminal(active.id, s.id, s.name) },
         { id: `killport:${s.id}`, title: `Kill port: ${s.name}`, icon: 'plug-zap', action: () => d.killServicePort(active.id, s.id) },
+        { id: `inspect:${s.id}`, title: `Inspect ${s.name}`, icon: 'activity', action: () => d.inspectService(active.id, s.id) },
       );
     }
   }

@@ -8,6 +8,7 @@ import { projectsRouter } from './routes/projects';
 import { servicesRouter } from './routes/services';
 import { wsLogsRouter } from './routes/ws-logs';
 import { logsRouter } from './routes/logs';
+import { introspectionRouter } from './routes/introspection';
 
 const PORT = Number(process.env['PAGGHIARO_PORT'] ?? 3001);
 const STATIC_DIR = resolveStaticDir();
@@ -35,6 +36,7 @@ const app = new Elysia()
   .use(servicesRouter)
   .use(wsLogsRouter)
   .use(logsRouter)
+  .use(introspectionRouter)
   .get('/', () => serveIndex())
   .get('/*', ({ request, set }) => {
     const url = new URL(request.url);
