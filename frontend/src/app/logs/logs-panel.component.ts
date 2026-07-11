@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { LogQuery, LogSeverity, StructuredLine } from '@dev-pagghiaro/shared';
 import { LogsService, nextErrorIndex } from '../services/logs.service';
@@ -41,7 +41,7 @@ import { UiService } from '../services/ui.service';
     </div>
   `,
 })
-export class LogsPanelComponent {
+export class LogsPanelComponent implements OnDestroy {
   readonly ui = inject(UiService);
   private readonly logsService = inject(LogsService);
   private readonly projectService = inject(ProjectService);
@@ -67,6 +67,13 @@ export class LogsPanelComponent {
         this.timer = null;
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
   }
 
   private currentProjectId(): string | null {
