@@ -14,6 +14,34 @@ const LogsQuerySchema = t.Object({
   limit: t.Optional(t.String()),
 });
 
+export function buildLogQuery(
+  params: {
+    services?: string;
+    q?: string;
+    useRegex: boolean;
+    severity?: LogSeverity;
+    since?: string;
+    limit?: string;
+  },
+  allServiceIds: string[],
+): LogQuery {
+  const serviceIds = params.services
+    ? params.services.split(',').map((s) => s.trim()).filter(Boolean)
+    : allServiceIds;
+
+  const since = params.since !== undefined ? Number(params.since) : NaN;
+  const limit = params.limit !== undefined ? Number(params.limit) : NaN;
+
+  return {
+    serviceIds,
+    regex: params.useRegex,
+    ...(params.q ? { q: params.q } : {}),
+    ...(params.severity ? { severity: params.severity } : {}),
+    ...(Number.isFinite(since) ? { since } : {}),
+    ...(Number.isFinite(limit) && limit > 0 ? { limit } : {}),
+  };
+}
+
 export const logsRouter = new Elysia().get(
   '/api/projects/:projectId/logs',
   async ({ params, query, set }) => {
@@ -25,7 +53,7 @@ export const logsRouter = new Elysia().get(
         new RegExp(query.q);
       } catch {
         set.status = 400;
-        return { error: 'BAD_REGEX', message: 'Invalid regular expression' };
+        return { error: 'BAD_REQUEST', message: 'Invalid regular expression' };
       }
     }
 
@@ -35,19 +63,17 @@ export const logsRouter = new Elysia().get(
       return { error: 'NOT_FOUND', message: 'Project not found' };
     }
 
-    const serviceIds = query.services
-      ? query.services.split(',').map((s) => s.trim()).filter(Boolean)
-      : project.services.map((s) => s.id);
-
-    const logQuery: LogQuery = {
-      serviceIds,
-      regex: useRegex,
-      ...(query.q ? { q: query.q } : {}),
-      ...(query.severity ? { severity: query.severity as LogSeverity } : {}),
-      ...(query.since ? { since: Number(query.since) } : {}),
-      ...(query.limit ? { limit: Number(query.limit) } : {}),
-    };
-
+    const logQuery = buildLogQuery(
+      {
+        useRegex,
+        ...(query.services ? { services: query.services } : {}),
+        ...(query.q ? { q: query.q } : {}),
+        ...(query.severity ? { severity: query.severity as LogSeverity } : {}),
+        ...(query.since ? { since: query.since } : {}),
+        ...(query.limit ? { limit: query.limit } : {}),
+      },
+      project.services.map((s) => s.id),
+    );
     return logStore.query(logQuery);
   },
   { query: LogsQuerySchema },
