@@ -3,7 +3,8 @@ import { logBus } from './log-bus';
 import { createLineAssembler } from './log-line-assembler';
 import { createSeverityClassifier, SEVERITY_RANK } from './log-severity';
 
-const MAX_LINES = Math.max(500, Number(process.env['PAGGHIARO_LOG_LINES'] ?? 5000));
+const PARSED_MAX = Number(process.env['PAGGHIARO_LOG_LINES']);
+const MAX_LINES = Number.isFinite(PARSED_MAX) ? Math.max(500, PARSED_MAX) : 5000;
 const DEFAULT_LIMIT = 2000;
 
 interface ServiceLog {

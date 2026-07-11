@@ -53,3 +53,11 @@ test('empty serviceIds queries all attached services', () => {
   logBus.emit('s1', 'x\n');
   expect(logStore.query({ serviceIds: [] }).length).toBe(1);
 });
+
+test('attach is idempotent — no duplicate subscription', () => {
+  logStore.attach('s1', 'p1');
+  logStore.attach('s1', 'p1');
+  logBus.emit('s1', 'once\n');
+  const lines = logStore.query({ serviceIds: ['s1'] });
+  expect(lines.length).toBe(1); // would be 2 if double-subscribed
+});
