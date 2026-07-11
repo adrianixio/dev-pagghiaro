@@ -3,7 +3,7 @@ import type { LogSeverity } from '@dev-pagghiaro/shared';
 export const SEVERITY_RANK: Record<LogSeverity, number> = { info: 0, warn: 1, error: 2 };
 
 const PY_TRACEBACK_HEADER = /^Traceback \(most recent call last\):/;
-const ERROR_TYPE = /^[A-Za-z_][\w.]*(Error|Exception):/;
+const ERROR_TYPE = /^([A-Za-z_][\w.]*)?(Error|Exception):/;
 const JS_AT_FRAME = /^\s+at\s+/;
 const ERROR_TOKEN = /\b(error|fatal|panic)\b/i;
 const WARN_TOKEN = /\b(warn|warning|deprecated)\b/i;
@@ -35,7 +35,7 @@ export function createSeverityClassifier(): {
       const isError = ERROR_TYPE.test(trimmed) || JS_AT_FRAME.test(text) || ERROR_TOKEN.test(text);
       if (isError) {
         // Un header "…Error:" apre uno stack JS per agganciare i frame "    at …".
-        if (/error:/i.test(trimmed)) {
+        if (ERROR_TYPE.test(trimmed)) {
           inStack = true;
         }
         return { severity: 'error', continuesEvent: false };

@@ -24,6 +24,23 @@ test('Python traceback groups until the error line', () => {
   expect(c.classify('ValueError: bad')).toEqual({ severity: 'error', continuesEvent: false });
 });
 
+test('bare Exception header is classified as error', () => {
+  const c = createSeverityClassifier();
+  expect(c.classify('Exception: kaboom')).toEqual({ severity: 'error', continuesEvent: false });
+});
+
+test('bare Error header still opens a JS stack', () => {
+  const c = createSeverityClassifier();
+  expect(c.classify('Error: bare')).toEqual({ severity: 'error', continuesEvent: false });
+  expect(c.classify('    at x (a.js:1:1)')).toEqual({ severity: 'error', continuesEvent: true });
+});
+
+test('mid-message "error:" mention does not reopen the stack', () => {
+  const c = createSeverityClassifier();
+  expect(c.classify('Retry failed, error: timeout')).toEqual({ severity: 'error', continuesEvent: false });
+  expect(c.classify('    some indented detail')).toEqual({ severity: 'info', continuesEvent: false });
+});
+
 test('severity rank ordering', () => {
   expect(SEVERITY_RANK.info).toBeLessThan(SEVERITY_RANK.warn);
   expect(SEVERITY_RANK.warn).toBeLessThan(SEVERITY_RANK.error);
