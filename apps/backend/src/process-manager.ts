@@ -65,7 +65,7 @@ function setState(
 
 // ─── CWD resolution ───────────────────────────────────────────────────────────
 
-function resolveCwd(serviceCwd: string, projectRootPath: string): string {
+export function resolveCwd(serviceCwd: string, projectRootPath: string): string {
   // Absolute path (Unix /… or Windows C:\…)
   if (serviceCwd.startsWith("/") || /^[A-Za-z]:[\\/]/.test(serviceCwd)) {
     return serviceCwd;
