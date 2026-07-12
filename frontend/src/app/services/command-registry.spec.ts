@@ -14,6 +14,7 @@ describe('buildCommands', () => {
     openLogs: () => {},
     inspectService: () => {},
     httpInspect: () => {},
+    debug: () => {},
   };
 
   it('includes a switch command per project and actions per service', () => {
@@ -26,5 +27,6 @@ describe('buildCommands', () => {
     expect(cmds.some((c) => c.id === 'open-logs')).toBeTrue();
     expect(cmds.some((c) => c.id === 'inspect:s1')).toBeTrue();
     expect(cmds.some((c) => c.id === 'http:s1')).toBeTrue();
+    expect(cmds.some((c) => c.id === 'debug:s1')).toBeTrue();
   });
 });

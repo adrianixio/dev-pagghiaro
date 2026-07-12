@@ -5,6 +5,7 @@ import {
   ArrowLeftRight,
   ArrowRight,
   ArrowDownToLine,
+  Bug,
   ChevronDown,
   ChevronRight,
   Columns2,
@@ -44,7 +45,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     importProvidersFrom(
       LucideAngularModule.pick({
-        Activity, ArrowDownToLine, ArrowLeftRight, ArrowRight, ChevronDown, ChevronRight, Columns2, ExternalLink, Folder, FolderPlus, GripVertical, HardDrive, ListOrdered, Maximize2, Menu, Minimize2, Moon, Pin, Play, PlugZap, Plus, RefreshCw, RotateCw, Save, ScrollText, Search, Server, Settings, Square, Sun, Terminal, Trash2, X
+        Activity, ArrowDownToLine, ArrowLeftRight, ArrowRight, Bug, ChevronDown, ChevronRight, Columns2, ExternalLink, Folder, FolderPlus, GripVertical, HardDrive, ListOrdered, Maximize2, Menu, Minimize2, Moon, Pin, Play, PlugZap, Plus, RefreshCw, RotateCw, Save, ScrollText, Search, Server, Settings, Square, Sun, Terminal, Trash2, X
       })
     )
   ]

@@ -22,3 +22,10 @@ test('accepts a valid httpInspect and rejects a malformed one', () => {
   expect(isServiceConfig({ ...base, httpInspect: { enabled: 'x' } })).toBe(false);
   expect(isServiceConfig({ ...base, httpInspect: { proxyPort: -1 } })).toBe(false);
 });
+
+test('accepts a valid debug config and rejects a malformed one', () => {
+  expect(isServiceConfig({ id: 's', name: 'S', command: 'true', cwd: '.', debug: { enabled: true, port: 9229 } })).toBe(true);
+  expect(isServiceConfig({ id: 's', name: 'S', command: 'true', cwd: '.', debug: {} })).toBe(true);
+  expect(isServiceConfig({ id: 's', name: 'S', command: 'true', cwd: '.', debug: { enabled: 1 } })).toBe(false);
+  expect(isServiceConfig({ id: 's', name: 'S', command: 'true', cwd: '.', debug: { port: -1 } })).toBe(false);
+});

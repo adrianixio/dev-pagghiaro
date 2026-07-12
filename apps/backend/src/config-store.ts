@@ -67,6 +67,17 @@ function isHttpInspectConfig(value: unknown): boolean {
   );
 }
 
+function isDebugConfig(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const c = value as Record<string, unknown>;
+  return (
+    (c['enabled'] === undefined || typeof c['enabled'] === 'boolean') &&
+    (c['port'] === undefined ||
+      (typeof c['port'] === 'number' && Number.isFinite(c['port']) && c['port'] >= 0))
+  );
+}
+
 export function isServiceConfig(value: unknown): value is ServiceConfig {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -83,7 +94,8 @@ export function isServiceConfig(value: unknown): value is ServiceConfig {
     (candidate.port === undefined || typeof candidate.port === 'number') &&
     (candidate.color === undefined || typeof candidate.color === 'string') &&
     isHealthCheckConfig((candidate as { healthCheck?: unknown }).healthCheck) &&
-    isHttpInspectConfig((candidate as { httpInspect?: unknown }).httpInspect)
+    isHttpInspectConfig((candidate as { httpInspect?: unknown }).httpInspect) &&
+    isDebugConfig((candidate as { debug?: unknown }).debug)
   );
 }
 

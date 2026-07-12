@@ -12,6 +12,8 @@ export interface EditableServiceDraft {
   healthCheckIntervalMs: number;
   httpInspectEnabled: boolean;
   httpInspectProxyPort: number | null;
+  debugEnabled: boolean;
+  debugPort: number | null;
 }
 
 export interface ProjectDraft {
