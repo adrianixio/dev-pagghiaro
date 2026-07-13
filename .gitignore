@@ -7,3 +7,5 @@ bun.lockb
 pagghiaro.json
 *.txt
 tmp-execution-test.json.superpowers/
+.idea/
+.claude/settings.local.json

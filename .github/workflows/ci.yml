@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - name: Shared typecheck
+        run: cd packages/shared && bunx tsc --noEmit
+      - name: Backend tests
+        run: cd apps/backend && bun test
+      - name: Backend build
+        run: cd apps/backend && bun run build
+      - name: Frontend build
+        run: cd frontend && bun run build
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+      # Frontend Karma needs a browser; run headless Chrome without a sandbox
+      # since the GitHub Actions runner executes as root.
+      - name: Frontend tests
+        run: cd frontend && bun run test -- --watch=false --browsers=ChromeHeadlessNoSandbox
