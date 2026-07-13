@@ -15,7 +15,7 @@ export interface SpawnMutation {
 }
 
 const BUN_BINS = new Set(['bun', 'bunx']);
-const NODE_BINS = new Set(['node', 'tsx', 'ts-node', 'nodemon']);
+const NODE_BINS = new Set(['node', 'tsx', 'ts-node', 'ts-node-esm', 'nodemon']);
 const NPM_LIKE = new Set(['npm', 'yarn', 'pnpm']);
 const PY_INTERPRETERS = new Set(['python', 'python3', 'python2', 'py']);
 const PY_MODULE_BINS = new Set([
@@ -30,7 +30,7 @@ function firstWord(command: string): string {
 function bareName(word: string): string {
   const noQuotes = word.replace(/^["']|["']$/g, '');
   const tail = noQuotes.split(/[\\/]/).pop() ?? noQuotes;
-  return tail.replace(/\.exe$/i, '').toLowerCase();
+  return tail.replace(/\.(exe|cmd|ps1|bat)$/i, '').toLowerCase();
 }
 
 export function detectLanguage(command: string): DebugLanguage | null {
@@ -41,9 +41,56 @@ export function detectLanguage(command: string): DebugLanguage | null {
   return null;
 }
 
-/** Node and tsx both honour NODE_OPTIONS, including when launched via npm. */
-export function planNodeSpawn(): SpawnMutation {
-  return { env: { NODE_OPTIONS: '--inspect=127.0.0.1:0' } };
+const INSPECT_FLAG = '--inspect=127.0.0.1:0';
+
+/**
+ * Plan the spawn-time mutation needed to attach the inspector to a Node-family
+ * command:
+ *   - direct binaries (`node`, `tsx`, ...)         → splice `--inspect` after the bin
+ *   - `ts-node <args>` (CJS)                        → `node -r ts-node/register --inspect ...`
+ *   - `ts-node --esm <args>`                        → `node --loader ts-node/esm --inspect ...`
+ *   - npm-like wrappers (`npm`/`pnpm`/`yarn`, incl. `.cmd`) → NODE_OPTIONS fallback (argv can't
+ *     be rewritten reliably through the wrapper's own script resolution)
+ * Deduplicates against an already-configured `--inspect` in either the command
+ * or the incoming `NODE_OPTIONS`.
+ */
+export function planNodeSpawn(command: string, env: Record<string, string> = {}): SpawnMutation {
+  if (command.includes('--inspect') || env.NODE_OPTIONS?.includes('--inspect')) {
+    return { command, env: {} };
+  }
+
+  const trimmed = command.trim();
+  const head = firstWord(trimmed);
+  const rest = trimmed.slice(head.length);
+  const bare = bareName(head);
+
+  if (NPM_LIKE.has(bare)) {
+    const existing = env.NODE_OPTIONS;
+    return {
+      env: { NODE_OPTIONS: existing ? `${INSPECT_FLAG} ${existing}` : INSPECT_FLAG },
+    };
+  }
+
+  if (bare === 'ts-node') {
+    const restTrimmed = rest.trim();
+    const esmMatch = /^--esm(\s+|$)/.exec(restTrimmed);
+    if (esmMatch) {
+      const afterEsm = restTrimmed.slice(esmMatch[0].length);
+      return {
+        command: `node --loader ts-node/esm ${INSPECT_FLAG}${afterEsm ? ' ' + afterEsm : ''}`,
+        env: {},
+      };
+    }
+    return {
+      command: `node -r ts-node/register ${INSPECT_FLAG}${restTrimmed ? ' ' + restTrimmed : ''}`,
+      env: {},
+    };
+  }
+
+  return {
+    command: `${head} ${INSPECT_FLAG}${rest}`,
+    env: {},
+  };
 }
 
 /** Bun only reads --inspect from the CLI, so we splice the flag after `bun`. */

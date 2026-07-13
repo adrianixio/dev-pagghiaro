@@ -55,6 +55,34 @@ export interface DebugSpawnContext {
   env: Record<string, string>;
 }
 
+/**
+ * On Windows, the direct `ts-node` → `node -r ts-node/register` /
+ * `node --loader ts-node/esm` argv rewrite is unreliable (the `-r`/`--loader`
+ * shim doesn't consistently resolve through Windows shells). Gate that
+ * rewrite off on win32 and fall back to the NODE_OPTIONS route instead.
+ */
+export function shouldSkipDirectTsNodeRewriteForPlatform(platform: string): boolean {
+  return platform === 'win32';
+}
+
+function isDirectTsNodeCommand(command: string): boolean {
+  const head = command.trim().split(/\s+/)[0] ?? '';
+  const noQuotes = head.replace(/^["']|["']$/g, '');
+  const bare = (noQuotes.split(/[\\/]/).pop() ?? noQuotes).replace(/\.(exe|cmd|ps1|bat)$/i, '').toLowerCase();
+  return bare === 'ts-node' || bare === 'ts-node-esm';
+}
+
+/** Same NODE_OPTIONS dedup/append semantics as planNodeSpawn's wrapper-fallback branch. */
+function planNodeOptionsFallback(env: Record<string, string>): { command?: string; env: Record<string, string> } {
+  const existing = env.NODE_OPTIONS;
+  if (existing?.includes('--inspect')) {
+    return { env: {} };
+  }
+  return {
+    env: { NODE_OPTIONS: existing ? `--inspect=127.0.0.1:0 ${existing}` : '--inspect=127.0.0.1:0' },
+  };
+}
+
 export const debugManager = {
   async prepareSpawn(
     service: ServiceConfig,
@@ -86,7 +114,14 @@ export const debugManager = {
     let attach: AttachKind;
 
     if (language === 'node') {
-      mutation = planNodeSpawn();
+      if (
+        isDirectTsNodeCommand(service.command) &&
+        shouldSkipDirectTsNodeRewriteForPlatform(process.platform)
+      ) {
+        mutation = planNodeOptionsFallback(context.env);
+      } else {
+        mutation = planNodeSpawn(service.command, context.env);
+      }
       attach = { kind: 'parse-url', language };
     } else if (language === 'bun') {
       mutation = planBunSpawn(service.command);
