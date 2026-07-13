@@ -916,7 +916,7 @@ export class DebugPanelComponent implements OnInit, OnDestroy {
   readonly session = computed(() => this.panelState().session);
   readonly watchRows = computed(() => this.debugService.buildWatchRows(this.serviceId));
   readonly groupBySource = computed(() => this.panelState().ui.groupBySource);
-  readonly debugEnabled = computed(() => Boolean(this.service()?.debug));
+  readonly debugEnabled = computed(() => Boolean(this.service()?.debug?.enabled));
   readonly persistWatchesEnabled = computed(() => Boolean(this.service()?.persistDebugWatches));
 
   readonly availablePresets = computed<DebugWatchPreset[]>(() => {
