@@ -645,7 +645,7 @@ export class DapAdapter {
   }
 }
 
-function toDapScopeVariable(v: Record<string, unknown>): DebugScopeVariable {
+export function toDapScopeVariable(v: Record<string, unknown>): DebugScopeVariable {
   const value = String(v['value'] ?? '');
   const typeRaw = String(v['type'] ?? '').toLowerCase();
   const type: DebugScopeVariable['type'] =
@@ -668,7 +668,7 @@ function toDapScopeVariable(v: Record<string, unknown>): DebugScopeVariable {
  * decide whether a condition is met we test the canonical falsy reprs and
  * treat anything else as truthy. Errors caught upstream show as such.
  */
-function isPythonTruthyRepr(repr: unknown): boolean {
+export function isPythonTruthyRepr(repr: unknown): boolean {
   if (repr === null || repr === undefined) return false;
   const s = String(repr).trim();
   if (s === '' || s === 'False' || s === 'None' || s === '0' || s === '0.0') return false;
@@ -676,7 +676,7 @@ function isPythonTruthyRepr(repr: unknown): boolean {
   return true;
 }
 
-function stringifyForCompare(value: unknown): string {
+export function stringifyForCompare(value: unknown): string {
   if (typeof value === 'string') return `s:${value}`;
   try {
     return `j:${JSON.stringify(value ?? null)}`;

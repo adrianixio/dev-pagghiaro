@@ -604,16 +604,16 @@ export class CdpAdapter {
 
 const SIMPLE_PATH_RE = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/;
 
-function isSimpleIdentifierPath(expr: string): boolean {
+export function isSimpleIdentifierPath(expr: string): boolean {
   return SIMPLE_PATH_RE.test(expr.trim());
 }
 
-function stringifyRuntime(value: unknown): string {
+export function stringifyRuntime(value: unknown): string {
   if (typeof value === 'string') return value;
   try { return JSON.stringify(value); } catch { return String(value); }
 }
 
-function normalizeType(type: unknown, value: unknown): DebugScopeVariable['type'] {
+export function normalizeType(type: unknown, value: unknown): DebugScopeVariable['type'] {
   if (type === 'string' || type === 'number' || type === 'boolean' || type === 'function') return type;
   if (value === null) return 'null';
   if (Array.isArray(value)) return 'array';
@@ -621,7 +621,7 @@ function normalizeType(type: unknown, value: unknown): DebugScopeVariable['type'
   return 'unknown';
 }
 
-function toScopeVariable(prop: Record<string, unknown>): DebugScopeVariable {
+export function toScopeVariable(prop: Record<string, unknown>): DebugScopeVariable {
   const valueObj = (prop['value'] as Record<string, unknown> | undefined) ?? {};
   const raw = valueObj['value'] ?? valueObj['description'] ?? null;
   return {
