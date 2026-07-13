@@ -11,6 +11,7 @@ import { logsRouter } from './routes/logs';
 import { introspectionRouter } from './routes/introspection';
 import { httpInspectRouter } from './routes/http-inspect';
 import { wsDebugRouter } from './routes/ws-debug';
+import { debugRouter } from './routes/debug';
 
 const PORT = Number(process.env['PAGGHIARO_PORT'] ?? 3001);
 const STATIC_DIR = resolveStaticDir();
@@ -41,6 +42,7 @@ const app = new Elysia()
   .use(introspectionRouter)
   .use(httpInspectRouter)
   .use(wsDebugRouter)
+  .use(debugRouter)
   .get('/', () => serveIndex())
   .get('/*', ({ request, set }) => {
     const url = new URL(request.url);
