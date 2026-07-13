@@ -18,6 +18,7 @@ import { proxyManager } from "./http-proxy";
 import { killProcessesListeningOnPort } from "./port-processes";
 import { stopProcessTree, isPidAlive } from "./process-tree";
 import { buildServiceProcessContext } from "./process-context";
+import { debugManager } from "./debug/debug-manager";
 
 // ─── Internal state ───────────────────────────────────────────────────────────
 
@@ -137,8 +138,11 @@ export const processManager = {
     let pty: PtyHandle;
     try {
       const processContext = await buildServiceProcessContext(projectRootPath, service);
+      const debugOverrides = await debugManager.prepareSpawn(service, { cwd, env: processContext });
+      const spawnCommand = debugOverrides?.command ?? service.command;
+      if (debugOverrides?.env) Object.assign(processContext, debugOverrides.env);
       pty = spawnPty({
-        command: service.command,
+        command: spawnCommand,
         cwd,
         env: processContext,
         initialSize,
@@ -186,6 +190,8 @@ export const processManager = {
       });
     }
 
+    debugManager.onProcessStarted(service);
+
     // Forward PTY output to the log bus
     pty.onData((chunk) => {
       logBus.emit(service.id, chunk);
@@ -196,6 +202,7 @@ export const processManager = {
       metricsCollector.untrack(service.id);
       healthMonitor.untrack(service.id);
       proxyManager.stop(service.id);
+      debugManager.onProcessExited(service.id);
       processes.delete(service.id);
       const intentional = stopping.has(service.id);
       const status = intentional || code === 0 ? "stopped" : "error";
