@@ -1,6 +1,6 @@
 import { CdkDrag, type CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { Component, Input, computed, inject, signal, type OnDestroy, type OnInit } from '@angular/core';
+import { Component, HostListener, Input, computed, inject, signal, type OnDestroy, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type {
   CreateDebugWatchBody,
@@ -78,7 +78,14 @@ type PlayerSpeed = (typeof PLAYER_SPEEDS)[number];
     }
   `],
   template: `
-    <div class="flex flex-col gap-4 rounded-xl border border-rustic-200 bg-white/95 p-4 shadow-sm transition-colors duration-300 dark:border-rustic-700 dark:bg-rustic-900/90">
+    <div class="fixed inset-0 z-50 flex overflow-y-auto bg-rustic-950/60 p-4 sm:p-6" (click)="close()">
+      <div
+        class="m-auto flex max-h-[92vh] w-full max-w-4xl flex-col gap-4 overflow-y-auto rounded-xl border border-rustic-200 bg-white/95 p-4 shadow-float transition-colors duration-300 dark:border-rustic-700 dark:bg-rustic-900/95"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Debug watch panel"
+        (click)="$event.stopPropagation()"
+      >
       <header class="flex flex-wrap items-center gap-3">
         <div class="flex items-center gap-2">
           <lucide-icon name="bug" [size]="18" class="text-country-blue"></lucide-icon>
@@ -91,224 +98,260 @@ type PlayerSpeed = (typeof PLAYER_SPEEDS)[number];
         <span class="rounded-full border border-rustic-200 bg-rustic-50 px-2 py-0.5 text-[11px] font-mono text-rustic-500 dark:border-rustic-700 dark:bg-rustic-800 dark:text-rustic-300">
           {{ session().watches.length }} watch{{ session().watches.length === 1 ? '' : 'es' }}
         </span>
-        <div class="ml-auto flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            class="btn btn-secondary px-3 py-1 text-xs"
-            [class.text-country-blue]="groupBySource()"
-            (click)="toggleGroupBySource()"
-          >
-            {{ groupBySource() ? 'Grouped by source' : 'Flat order' }}
-          </button>
-          <button
-            type="button"
-            class="btn btn-secondary flex items-center gap-2 px-3 py-1 text-xs"
-            [class.opacity-60]="!canExportSession()"
-            [disabled]="!canExportSession()"
-            (click)="exportSession()"
-          >
-            <lucide-icon name="arrow-down-to-line" [size]="13"></lucide-icon>
-            Export session JSON
-          </button>
-        </div>
+        <button
+          type="button"
+          class="ml-auto flex items-center gap-1.5 rounded-md border border-rustic-200 px-2.5 py-1 text-xs font-medium text-rustic-600 transition-colors hover:bg-rustic-100 hover:text-rustic-900 dark:border-rustic-700 dark:text-rustic-300 dark:hover:bg-rustic-800 dark:hover:text-rustic-100"
+          (click)="close()"
+          aria-label="Close debug panel"
+        >
+          <lucide-icon name="x" [size]="14"></lucide-icon>
+          Close
+        </button>
       </header>
 
       @if (session().message) {
-        <div class="rounded-lg border border-rustic-200 bg-rustic-50 px-3 py-2 text-xs text-rustic-600 dark:border-rustic-700 dark:bg-rustic-800/70 dark:text-rustic-300">
+        <div class="rounded-lg border border-rustic-200 bg-rustic-50 px-3 py-2 text-xs text-rustic-700 dark:border-rustic-700 dark:bg-rustic-800/70 dark:text-rustic-200">
           {{ session().message }}
         </div>
       }
 
-      <div class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-        <div class="flex flex-col gap-2">
-          <label class="flex items-start gap-3 rounded-lg border border-country-green/25 bg-country-green/10 px-3 py-3 text-sm text-rustic-700 dark:text-rustic-200">
-            <input
-              type="checkbox"
-              [checked]="debugEnabled()"
-              (change)="toggleDebugFlag($event)"
-              class="mt-0.5 rounded border-rustic-300 bg-white text-country-green focus:ring-country-green dark:border-rustic-600 dark:bg-rustic-800"
-            />
-            <div>
-              <span class="font-semibold text-country-green">Enable inspector on next start</span>
-              <p class="mt-1 text-xs text-rustic-600 dark:text-rustic-300">
-                Watches evaluate arbitrary expressions inside the target process. Keep this on only for the services you are actively debugging.
-              </p>
-            </div>
-          </label>
-          <label class="flex items-start gap-3 rounded-lg border border-country-blue/25 bg-country-blue/10 px-3 py-3 text-sm text-rustic-700 dark:text-rustic-200">
-            <input
-              type="checkbox"
-              [checked]="persistWatchesEnabled()"
-              (change)="togglePersistWatches($event)"
-              class="mt-0.5 rounded border-rustic-300 bg-white text-country-blue focus:ring-country-blue dark:border-rustic-600 dark:bg-rustic-800"
-            />
-            <div>
-              <span class="font-semibold text-country-blue">Persist watches in pagghiaro.json</span>
-              <p class="mt-1 text-xs text-rustic-600 dark:text-rustic-300">
-                Save the watch list (not the sample history) to the config file so it reappears after a backend restart. Useful for repeatable debugging recipes.
-              </p>
-            </div>
-          </label>
+      <!-- Status banners: full-width so they never crowd the header or controls. -->
+      @if (session().status === 'unsupported') {
+        <div class="rounded-lg border border-dashed border-country-yellow/40 bg-country-yellow/10 px-3 py-2.5 text-xs text-rustic-700 dark:text-rustic-200">
+          <span class="font-semibold text-country-yellow">Debug Watch isn't available for this runtime.</span>
+          Node, Bun, and Python services expose live watch samples; other runtimes still run normally.
         </div>
+      } @else if (isDetachedWhileRunning()) {
+        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-country-blue/30 bg-country-blue/10 px-3 py-2.5 text-xs text-rustic-700 dark:text-rustic-200">
+          <div class="min-w-0">
+            <span class="font-semibold text-country-blue">Inspector detached while the service is running.</span>
+            Restart the service to re-open the runtime inspector and reattach your watches.
+          </div>
+          <button type="button" class="btn btn-secondary shrink-0 px-3 py-1 text-xs text-country-yellow" (click)="restartNow()">
+            Restart now
+          </button>
+        </div>
+      } @else if (debugEnabled() && session().status === 'detached') {
+        <div class="rounded-lg border border-rustic-200 bg-rustic-50 px-3 py-2 text-xs text-rustic-600 dark:border-rustic-700 dark:bg-rustic-800/70 dark:text-rustic-300">
+          Inspector support is enabled — start or restart the service when you are ready to attach.
+        </div>
+      }
 
-        @if (session().status === 'unsupported') {
-          <div class="rounded-lg border border-dashed border-country-yellow/40 bg-country-yellow/10 px-3 py-3 text-xs text-rustic-700 dark:text-rustic-200">
-            <div class="font-semibold text-country-yellow">What is this?</div>
-            <p class="mt-1 text-rustic-600 dark:text-rustic-300">
-              Debug Watch currently supports Node, Bun, and Python services. Other runtimes can still run normally, but they will not expose live watch samples yet.
-            </p>
-          </div>
-        } @else if (isDetachedWhileRunning()) {
-          <div class="rounded-lg border border-country-blue/30 bg-country-blue/10 px-3 py-3 text-xs text-rustic-700 dark:text-rustic-200">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="font-semibold text-country-blue">Inspector session detached while the service is still running.</span>
-              <button type="button" class="btn btn-secondary px-3 py-1 text-xs text-country-yellow" (click)="restartNow()">
-                Restart now
-              </button>
-            </div>
-            <p class="mt-1 text-rustic-600 dark:text-rustic-300">
-              Restart the service to re-open the runtime inspector and reattach your watches.
-            </p>
-          </div>
-        } @else if (debugEnabled() && session().status === 'detached') {
-          <div class="rounded-lg border border-rustic-200 bg-rustic-50 px-3 py-3 text-xs text-rustic-600 dark:border-rustic-700 dark:bg-rustic-800/70 dark:text-rustic-300">
-            Inspector support is enabled. Start or restart the service when you are ready to attach.
-          </div>
-        }
+      <!-- Settings: compact one-line toggles (full text on hover) instead of two tall cards. -->
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-rustic-200 bg-rustic-50/80 px-3 py-2 dark:border-rustic-700 dark:bg-rustic-800/50">
+        <span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">
+          <lucide-icon name="settings" [size]="13"></lucide-icon>
+          Settings
+        </span>
+        <label
+          class="flex cursor-pointer items-center gap-2 text-xs font-medium text-rustic-700 dark:text-rustic-200"
+          title="Watches evaluate arbitrary expressions inside the target process. Keep this on only for the services you are actively debugging."
+        >
+          <input
+            type="checkbox"
+            [checked]="debugEnabled()"
+            (change)="toggleDebugFlag($event)"
+            class="rounded border-rustic-300 bg-white text-country-green focus:ring-country-green dark:border-rustic-600 dark:bg-rustic-800"
+          />
+          <span [class.text-country-green]="debugEnabled()">Enable inspector on next start</span>
+        </label>
+        <label
+          class="flex cursor-pointer items-center gap-2 text-xs font-medium text-rustic-700 dark:text-rustic-200"
+          title="Save the watch list (not the sample history) to pagghiaro.json so it reappears after a backend restart. Useful for repeatable debugging recipes."
+        >
+          <input
+            type="checkbox"
+            [checked]="persistWatchesEnabled()"
+            (change)="togglePersistWatches($event)"
+            class="rounded border-rustic-300 bg-white text-country-blue focus:ring-country-blue dark:border-rustic-600 dark:bg-rustic-800"
+          />
+          <span [class.text-country-blue]="persistWatchesEnabled()">Persist watches to config</span>
+        </label>
       </div>
 
-      <form (submit)="$event.preventDefault(); submitWatch()" class="flex flex-col gap-2">
-        <div class="grid gap-2 md:grid-cols-[minmax(0,1fr)_6rem_7rem_8rem_auto] md:items-end">
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Expression</span>
-            <input
-              type="text"
-              [(ngModel)]="exprInput"
-              name="expr"
-              placeholder="globalThis.counter"
-              class="input-field py-1.5 font-mono text-sm"
-            />
-          </label>
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Interval</span>
-            <input
-              type="number"
-              [(ngModel)]="intervalInput"
-              name="interval"
-              min="50"
-              max="60000"
-              [disabled]="modeInput() === 'onChange'"
-              class="input-field py-1.5 font-mono text-sm disabled:opacity-50"
-            />
-          </label>
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Mode</span>
-            <select
-              [(ngModel)]="modeInput"
-              name="mode"
-              class="input-field py-1.5 font-mono text-sm"
-              title="interval = poll every N ms; onChange = JS uses property setters, Python dedupes consecutive equal values"
-            >
-              <option value="interval">interval</option>
-              <option value="onChange">onChange</option>
-            </select>
-          </label>
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Thread</span>
-            <input
-              type="text"
-              [(ngModel)]="threadInput"
-              name="thread"
-              placeholder="MainThread"
-              title="Python only. Leave blank to use the main thread; substring match supported."
-              class="input-field py-1.5 font-mono text-sm"
-            />
-          </label>
-          <button type="submit" class="btn btn-secondary text-country-green md:h-[2.625rem]">Add watch</button>
-        </div>
-        <div class="grid gap-2 md:grid-cols-[12rem_10rem_minmax(0,1fr)] md:items-end">
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Label (optional)</span>
-            <input
-              type="text"
-              [(ngModel)]="labelInput"
-              name="label"
-              placeholder="cart.total ($)"
-              class="input-field py-1.5 text-sm"
-            />
-          </label>
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Group (optional)</span>
-            <input
-              type="text"
-              [(ngModel)]="groupInput"
-              name="group"
-              placeholder="Request lifecycle"
-              title="Cluster this watch under a custom card alongside others sharing the same group name."
-              class="input-field py-1.5 text-sm"
-            />
-          </label>
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Condition (optional)</span>
-            <input
-              type="text"
-              [(ngModel)]="conditionInput"
-              name="condition"
-              placeholder="globalThis.counter > 100"
-              title="Sample is dropped when this expression is falsy. Works in both interval and onChange modes (JS + Python)."
-              class="input-field py-1.5 font-mono text-sm"
-            />
-          </label>
-        </div>
-      </form>
-
-      <div
-        class="flex flex-wrap items-end gap-2 rounded-xl border border-dashed p-3 text-xs text-rustic-600 dark:text-rustic-300"
-        [ngClass]="isDragOver()
-          ? 'border-country-blue bg-country-blue/10'
-          : 'border-rustic-300 bg-rustic-50/70 dark:border-rustic-600 dark:bg-rustic-800/40'"
-        (dragover)="onPresetDragOver($event)"
-        (dragleave)="onPresetDragLeave($event)"
-        (drop)="onPresetDrop($event)"
-      >
-        <label class="flex flex-col gap-1 min-w-[14rem]">
-          <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Apply template</span>
-          <select
-            [(ngModel)]="selectedPresetId"
-            name="presetId"
-            class="input-field py-1.5 text-sm"
-            [disabled]="availablePresets().length === 0"
+      <section class="flex flex-col gap-2 border-t border-rustic-200 pt-3 dark:border-rustic-700">
+        <div class="flex items-center gap-2">
+          <lucide-icon name="plus" [size]="15" class="text-country-green"></lucide-icon>
+          <h4 class="text-xs font-bold uppercase tracking-[0.18em] text-rustic-700 dark:text-rustic-200">Add watch</h4>
+          <button
+            type="button"
+            class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-rustic-500 transition-colors hover:bg-rustic-100 hover:text-rustic-800 dark:text-rustic-400 dark:hover:bg-rustic-800 dark:hover:text-rustic-100"
+            [attr.aria-expanded]="showAdvancedWatch()"
+            (click)="showAdvancedWatch.set(!showAdvancedWatch())"
           >
-            <option value="">— pick a preset —</option>
-            @for (preset of availablePresets(); track preset.id) {
-              <option [value]="preset.id" [title]="preset.description">{{ presetLabel(preset) }}</option>
+            <lucide-icon [name]="showAdvancedWatch() ? 'chevron-down' : 'chevron-right'" [size]="14"></lucide-icon>
+            {{ showAdvancedWatch() ? 'Fewer options' : 'More options' }}
+          </button>
+        </div>
+
+        <form (submit)="$event.preventDefault(); submitWatch()" class="flex flex-col gap-2">
+          <div class="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <label class="flex flex-col gap-1">
+              <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Expression</span>
+              <input
+                type="text"
+                [(ngModel)]="exprInput"
+                name="expr"
+                placeholder="globalThis.counter"
+                class="input-field py-1.5 font-mono text-sm"
+              />
+            </label>
+            <button type="submit" class="btn btn-secondary text-country-green md:h-[2.625rem]">Add watch</button>
+          </div>
+
+          @if (showAdvancedWatch()) {
+            <div class="grid gap-2 md:grid-cols-[8rem_9rem_minmax(0,1fr)] md:items-end">
+              <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Interval (ms)</span>
+                <input
+                  type="number"
+                  [(ngModel)]="intervalInput"
+                  name="interval"
+                  min="50"
+                  max="60000"
+                  [disabled]="modeInput() === 'onChange'"
+                  class="input-field py-1.5 font-mono text-sm disabled:opacity-50"
+                />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Mode</span>
+                <select
+                  [(ngModel)]="modeInput"
+                  name="mode"
+                  class="input-field py-1.5 font-mono text-sm"
+                  title="interval = poll every N ms; onChange = JS uses property setters, Python dedupes consecutive equal values"
+                >
+                  <option value="interval">interval</option>
+                  <option value="onChange">onChange</option>
+                </select>
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Thread <span class="normal-case tracking-normal text-rustic-400">(Python)</span></span>
+                <input
+                  type="text"
+                  [(ngModel)]="threadInput"
+                  name="thread"
+                  placeholder="MainThread"
+                  title="Python only. Leave blank to use the main thread; substring match supported."
+                  class="input-field py-1.5 font-mono text-sm"
+                />
+              </label>
+            </div>
+            <div class="grid gap-2 md:grid-cols-[12rem_10rem_minmax(0,1fr)] md:items-end">
+              <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Label</span>
+                <input
+                  type="text"
+                  [(ngModel)]="labelInput"
+                  name="label"
+                  placeholder="cart.total ($)"
+                  class="input-field py-1.5 text-sm"
+                />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Group</span>
+                <input
+                  type="text"
+                  [(ngModel)]="groupInput"
+                  name="group"
+                  placeholder="Request lifecycle"
+                  title="Cluster this watch under a custom card alongside others sharing the same group name."
+                  class="input-field py-1.5 text-sm"
+                />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Condition</span>
+                <input
+                  type="text"
+                  [(ngModel)]="conditionInput"
+                  name="condition"
+                  placeholder="globalThis.counter > 100"
+                  title="Sample is dropped when this expression is falsy. Works in both interval and onChange modes (JS + Python)."
+                  class="input-field py-1.5 font-mono text-sm"
+                />
+              </label>
+            </div>
+          }
+        </form>
+
+        @if (showAdvancedWatch()) {
+          <div
+            class="flex flex-wrap items-end gap-2 rounded-lg border border-dashed p-3 text-xs text-rustic-600 dark:text-rustic-300"
+            [ngClass]="isDragOver()
+              ? 'border-country-blue bg-country-blue/10'
+              : 'border-rustic-300 bg-rustic-50/70 dark:border-rustic-600 dark:bg-rustic-800/40'"
+            (dragover)="onPresetDragOver($event)"
+            (dragleave)="onPresetDragLeave($event)"
+            (drop)="onPresetDrop($event)"
+          >
+            <label class="flex flex-col gap-1 min-w-[14rem]">
+              <span class="text-[10px] uppercase tracking-[0.18em] text-rustic-500 dark:text-rustic-400">Apply template</span>
+              <select
+                [(ngModel)]="selectedPresetId"
+                name="presetId"
+                class="input-field py-1.5 text-sm"
+                [disabled]="availablePresets().length === 0"
+              >
+                <option value="">— pick a preset —</option>
+                @for (preset of availablePresets(); track preset.id) {
+                  <option [value]="preset.id" [title]="preset.description">{{ presetLabel(preset) }}</option>
+                }
+              </select>
+            </label>
+            <button type="button" class="btn btn-secondary px-3 py-1 text-xs text-country-blue" [disabled]="!selectedPresetId()" (click)="applyPreset()">
+              Apply
+            </button>
+
+            <span class="mx-1 hidden h-8 w-px bg-rustic-300 dark:bg-rustic-600 md:inline-block"></span>
+
+            <button type="button" class="btn btn-secondary px-3 py-1 text-xs text-country-green" (click)="exportPreset()" [disabled]="session().watches.length === 0">
+              Export preset
+            </button>
+
+            <label class="btn btn-secondary cursor-pointer px-3 py-1 text-xs text-country-yellow">
+              Import file…
+              <input type="file" accept="application/json,.json" class="hidden" (change)="onPresetFileSelected($event)" />
+            </label>
+
+            <span class="ml-auto text-[10px] italic text-rustic-500 dark:text-rustic-400">
+              {{ isDragOver() ? 'Drop the JSON file to import…' : 'Or drag a JSON preset onto this area' }}
+            </span>
+
+            @if (importMessage(); as msg) {
+              <div class="basis-full pt-1 text-[11px] font-mono"
+                   [class.text-country-green]="msg.tone === 'ok'"
+                   [class.text-country-red]="msg.tone === 'error'">
+                {{ msg.text }}
+              </div>
             }
-          </select>
-        </label>
-        <button type="button" class="btn btn-secondary px-3 py-1 text-xs text-country-blue" [disabled]="!selectedPresetId()" (click)="applyPreset()">
-          Apply
-        </button>
+          </div>
+        }
+      </section>
 
-        <span class="mx-1 hidden h-8 w-px bg-rustic-300 dark:bg-rustic-600 md:inline-block"></span>
-
-        <button type="button" class="btn btn-secondary px-3 py-1 text-xs text-country-green" (click)="exportPreset()" [disabled]="session().watches.length === 0">
-          Export preset
-        </button>
-
-        <label class="btn btn-secondary cursor-pointer px-3 py-1 text-xs text-country-yellow">
-          Import file…
-          <input type="file" accept="application/json,.json" class="hidden" (change)="onPresetFileSelected($event)" />
-        </label>
-
-        <span class="ml-auto text-[10px] italic text-rustic-500 dark:text-rustic-400">
-          {{ isDragOver() ? 'Drop the JSON file to import…' : 'Or drag a JSON preset onto this area' }}
-        </span>
-
-        @if (importMessage(); as msg) {
-          <div class="basis-full pt-1 text-[11px] font-mono"
-               [class.text-country-green]="msg.tone === 'ok'"
-               [class.text-country-red]="msg.tone === 'error'">
-            {{ msg.text }}
+      <section class="flex flex-col gap-3 border-t border-rustic-200 pt-3 dark:border-rustic-700">
+      <div class="flex flex-wrap items-center gap-2">
+        <lucide-icon name="list-ordered" [size]="15" class="text-country-blue"></lucide-icon>
+        <h4 class="text-xs font-bold uppercase tracking-[0.18em] text-rustic-700 dark:text-rustic-200">Watches</h4>
+        @if (session().watches.length > 0) {
+          <div class="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="btn btn-secondary px-3 py-1 text-xs"
+              [class.text-country-blue]="groupBySource()"
+              (click)="toggleGroupBySource()"
+            >
+              {{ groupBySource() ? 'Grouped by source' : 'Flat order' }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary flex items-center gap-2 px-3 py-1 text-xs"
+              [class.opacity-60]="!canExportSession()"
+              [disabled]="!canExportSession()"
+              (click)="exportSession()"
+            >
+              <lucide-icon name="arrow-down-to-line" [size]="13"></lucide-icon>
+              Export session JSON
+            </button>
           </div>
         }
       </div>
@@ -595,16 +638,29 @@ type PlayerSpeed = (typeof PLAYER_SPEEDS)[number];
         </div>
       }
 
+      </section>
+
       <section class="rounded-xl border border-country-blue/30 bg-country-blue/5 p-3">
-        <header class="flex flex-wrap items-center gap-2">
-          <lucide-icon name="circle-dot" [size]="16" class="text-country-blue"></lucide-icon>
+        <button
+          type="button"
+          class="flex w-full flex-wrap items-center gap-2 text-left"
+          [attr.aria-expanded]="recordingsOpen()"
+          (click)="recordingsOpen.set(!recordingsOpen())"
+        >
+          <lucide-icon name="activity" [size]="16" class="text-country-blue"></lucide-icon>
           <h4 class="text-xs font-bold uppercase tracking-[0.18em] text-country-blue">Recordings</h4>
           @if (activeRecording(); as active) {
             <span class="rounded-full border border-country-red/40 bg-country-red/10 px-2 py-0.5 text-[11px] font-mono text-country-red">
               ● recording · {{ active.sampleCount }} samples · {{ recordingDurationLabel() }}
             </span>
+          } @else if (finishedRecordings().length > 0) {
+            <span class="rounded-full border border-rustic-300 bg-white/70 px-2 py-0.5 text-[11px] font-mono text-rustic-500 dark:border-rustic-600 dark:bg-rustic-800 dark:text-rustic-300">
+              {{ finishedRecordings().length }} saved
+            </span>
           }
-        </header>
+          <lucide-icon [name]="recordingsOpen() ? 'chevron-down' : 'chevron-right'" [size]="16" class="ml-auto text-rustic-500 dark:text-rustic-400"></lucide-icon>
+        </button>
+        @if (recordingsOpen()) {
         <p class="mt-2 text-[11px] text-rustic-500 dark:text-rustic-400">
           Capture every sample from every watch into a named, sealed snapshot. Lives in memory only — not persisted across backend restarts.
         </p>
@@ -665,8 +721,17 @@ type PlayerSpeed = (typeof PLAYER_SPEEDS)[number];
         </form>
 
         <form (submit)="$event.preventDefault(); startAutoRecording()" class="mt-2 rounded-lg border border-country-yellow/30 bg-country-yellow/5 p-3">
-          <div class="mb-2 text-[10px] uppercase tracking-[0.18em] text-country-yellow">Auto-record everything (experimental)</div>
-          <div class="grid gap-2 md:grid-cols-3">
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-country-yellow"
+            [attr.aria-expanded]="showAutoRecord()"
+            (click)="showAutoRecord.set(!showAutoRecord())"
+          >
+            <lucide-icon [name]="showAutoRecord() ? 'chevron-down' : 'chevron-right'" [size]="13"></lucide-icon>
+            Auto-record everything (experimental)
+          </button>
+          @if (showAutoRecord()) {
+          <div class="mt-2 grid gap-2 md:grid-cols-3">
             <label class="flex flex-col gap-1 text-[11px]">
               <span>Interval ms</span>
               <input type="number" min="250" max="10000" [ngModel]="autoIntervalMs()" (ngModelChange)="autoIntervalMs.set($event)" [ngModelOptions]="{ standalone: true }" class="input-field py-1.5 font-mono text-sm" [disabled]="!!activeRecording()" />
@@ -689,6 +754,7 @@ type PlayerSpeed = (typeof PLAYER_SPEEDS)[number];
             <label class="flex items-center gap-1"><input type="checkbox" [checked]="autoIncludeUserGlobals()" (change)="autoIncludeUserGlobals.set($any($event.target).checked)" [disabled]="!!activeRecording()" /> include user globals</label>
             <button type="submit" class="ml-auto btn btn-secondary px-3 py-1 text-xs text-country-yellow" [disabled]="!!activeRecording() || !canStartRecording()">Start auto-recording</button>
           </div>
+          }
         </form>
 
         @if (playerRecording(); as player) {
@@ -866,7 +932,9 @@ type PlayerSpeed = (typeof PLAYER_SPEEDS)[number];
             }
           </ul>
         }
+        }
       </section>
+      </div>
     </div>
   `,
 })
@@ -903,6 +971,13 @@ export class DebugPanelComponent implements OnInit, OnDestroy {
   selectedPresetId = signal('');
   isDragOver = signal(false);
   importMessage = signal<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  // ── Progressive-disclosure UI state ─────────────────────────────────────
+  // The panel packs a lot in; these keep the secondary controls folded away
+  // by default so the everyday flow (enable → add watch → read values) stays
+  // uncluttered. None of them touch server state.
+  showAdvancedWatch = signal(false);
+  showAutoRecord = signal(false);
+  recordingsOpen = signal(false);
   // ── Recording player state ──────────────────────────────────────────────
   playerRecording = signal<DebugRecording | null>(null);
   playerPlayheadMs = signal(0);
@@ -970,7 +1045,13 @@ export class DebugPanelComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.debugService.attach(this.serviceId);
-    void this.debugService.refreshRecordings(this.serviceId);
+    void this.debugService.refreshRecordings(this.serviceId).then(() => {
+      // Auto-expand Recordings only when there is something to show, so the
+      // section header stays collapsed on a fresh, empty session.
+      if (this.activeRecording() || this.finishedRecordings().length > 0) {
+        this.recordingsOpen.set(true);
+      }
+    });
     // Drives the live "X:XX" duration label without forcing the panel to
     // recompute every signal — the chip's text just reads `recordingTick`.
     this.recordingTickHandle = setInterval(() => this.recordingTick.update((n) => n + 1), 1000);
@@ -981,6 +1062,16 @@ export class DebugPanelComponent implements OnInit, OnDestroy {
     this.recordingTickHandle = null;
     this.stopPlayerTick();
     this.debugService.detach(this.serviceId);
+  }
+
+  /** Dismiss the panel — clears the UI debug target so the shell hides it. */
+  close(): void {
+    this.uiService.closeDebug();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.close();
   }
 
   // ── Player computed/helpers ─────────────────────────────────────────────
