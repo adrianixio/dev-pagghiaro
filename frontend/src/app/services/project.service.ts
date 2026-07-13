@@ -170,26 +170,8 @@ export class ProjectService {
   }
 
   async stopService(projectId: string, serviceId: string): Promise<void> {
-    // Optimistic update: show stopped immediately so the UI doesn't freeze for up to 5s
-    this.updateServiceStatus(projectId, serviceId, 'stopped');
+    await this.runServiceAction(projectId, serviceId, 'stop');
     this.updateServiceMetrics(projectId, serviceId, { cpu: 0, ram: 0 });
-    try {
-      const response = await fetch(`${API_BASE}/projects/${projectId}/services/${serviceId}/stop`, {
-        method: 'POST',
-      });
-      // 404 means the process was already gone — treat as stopped, not error
-      if (!response.ok && response.status !== 404) {
-        await this.fetchServiceState(projectId, serviceId);
-        return;
-      }
-      if (response.ok) {
-        const state = (await response.json()) as ServiceState;
-        this.updateServiceStatus(projectId, serviceId, state.status);
-      }
-    } catch (error) {
-      console.error(`Error stopping service ${serviceId}:`, error);
-      await this.fetchServiceState(projectId, serviceId);
-    }
   }
 
   async restartService(projectId: string, serviceId: string): Promise<void> {
@@ -216,13 +198,11 @@ export class ProjectService {
   }
 
   async stopAllServices(projectId: string): Promise<void> {
-    // Optimistic: mark everything stopped immediately
+    await this.runBulkOperation(projectId, 'stop-all');
     const project = this.getProjectById(projectId);
     for (const service of project?.services ?? []) {
-      this.updateServiceStatus(projectId, service.id, 'stopped');
       this.updateServiceMetrics(projectId, service.id, { cpu: 0, ram: 0 });
     }
-    await this.runBulkOperation(projectId, 'stop-all');
   }
 
   async restartAllServices(projectId: string): Promise<void> {
@@ -510,40 +490,6 @@ export class ProjectService {
       throw new Error('Failed to create service');
     }
     return (await response.json()) as { id: string };
-  }
-
-  async setServiceDebug(projectId: string, serviceId: string, enabled: boolean): Promise<void> {
-    await this.updateService(projectId, serviceId, { debug: enabled });
-    this.projectsSignal.update((projects) =>
-      projects.map((project) => {
-        if (project.id !== projectId) return project;
-        return {
-          ...project,
-          services: project.services.map((service) =>
-            service.id === serviceId ? { ...service, debug: enabled } : service
-          ),
-        };
-      })
-    );
-  }
-
-  async setServicePersistDebugWatches(
-    projectId: string,
-    serviceId: string,
-    enabled: boolean
-  ): Promise<void> {
-    await this.updateService(projectId, serviceId, { persistDebugWatches: enabled });
-    this.projectsSignal.update((projects) =>
-      projects.map((project) => {
-        if (project.id !== projectId) return project;
-        return {
-          ...project,
-          services: project.services.map((service) =>
-            service.id === serviceId ? { ...service, persistDebugWatches: enabled } : service
-          ),
-        };
-      })
-    );
   }
 
   private async updateService(projectId: string, serviceId: string, body: UpdateServiceBody): Promise<void> {
