@@ -1,7 +1,6 @@
-import type { CreateServiceBody, UpdateServiceBody } from '@dev-pagghiaro/shared';
-import { Elysia, t } from 'elysia';
 import { randomUUID } from 'node:crypto';
-import { watchRegistry } from '../debug/watch-registry';
+import { Elysia, t } from 'elysia';
+import type { CreateServiceBody, UpdateServiceBody } from '@dev-pagghiaro/shared';
 import {
   addService,
   getProject,
@@ -10,6 +9,7 @@ import {
   updateService,
 } from '../config-store';
 import { logBus } from '../log-bus';
+import { healthMonitor } from '../health-monitor';
 import { metricsCollector } from '../metrics-collector';
 import { killProcessesListeningOnPort } from '../port-processes';
 import { processManager } from '../process-manager';
@@ -22,8 +22,17 @@ const CreateServiceSchema = t.Object({
   autoStart: t.Optional(t.Boolean()),
   port: t.Optional(t.Nullable(t.Number())),
   color: t.Optional(t.String()),
-  debug: t.Optional(t.Boolean()),
-  persistDebugWatches: t.Optional(t.Boolean()),
+  healthCheck: t.Optional(
+    t.Object({
+      enabled: t.Optional(t.Boolean()),
+      path: t.Optional(t.String()),
+      intervalMs: t.Optional(t.Number({ minimum: 0 })),
+    })
+  ),
+  httpInspect: t.Optional(
+    t.Object({ enabled: t.Optional(t.Boolean()), proxyPort: t.Optional(t.Number({ minimum: 0 })) })
+  ),
+  debug: t.Optional(t.Object({ enabled: t.Optional(t.Boolean()), port: t.Optional(t.Number({ minimum: 0 })) })),
 });
 
 const UpdateServiceSchema = t.Object({
@@ -34,8 +43,17 @@ const UpdateServiceSchema = t.Object({
   autoStart: t.Optional(t.Boolean()),
   port: t.Optional(t.Nullable(t.Number())),
   color: t.Optional(t.String()),
-  debug: t.Optional(t.Boolean()),
-  persistDebugWatches: t.Optional(t.Boolean()),
+  healthCheck: t.Optional(
+    t.Object({
+      enabled: t.Optional(t.Boolean()),
+      path: t.Optional(t.String()),
+      intervalMs: t.Optional(t.Number({ minimum: 0 })),
+    })
+  ),
+  httpInspect: t.Optional(
+    t.Object({ enabled: t.Optional(t.Boolean()), proxyPort: t.Optional(t.Number({ minimum: 0 })) })
+  ),
+  debug: t.Optional(t.Object({ enabled: t.Optional(t.Boolean()), port: t.Optional(t.Number({ minimum: 0 })) })),
 });
 
 const BASE = '/api/projects/:projectId/services';
@@ -68,10 +86,9 @@ export const servicesRouter = new Elysia()
         ...(payload.autoStart !== undefined ? { autoStart: payload.autoStart } : {}),
         ...(payload.port != null ? { port: payload.port } : {}),
         ...(payload.color !== undefined ? { color: payload.color } : {}),
+        ...(payload.healthCheck !== undefined ? { healthCheck: payload.healthCheck } : {}),
+        ...(payload.httpInspect !== undefined ? { httpInspect: payload.httpInspect } : {}),
         ...(payload.debug !== undefined ? { debug: payload.debug } : {}),
-        ...(payload.persistDebugWatches !== undefined
-          ? { persistDebugWatches: payload.persistDebugWatches }
-          : {}),
       };
 
       const created = await addService(params.projectId, service);
@@ -149,7 +166,7 @@ export const servicesRouter = new Elysia()
   })
   .post(`${BASE}/:serviceId/clear-logs`, async ({ params, set }) => {
     const project = await getProject(params.projectId);
-    if (!project?.services.some((service) => service.id === params.serviceId)) {
+    if (!project || !project.services.some((service) => service.id === params.serviceId)) {
       set.status = 404;
       return { error: 'NOT_FOUND', message: 'Service not found' };
     }
@@ -158,13 +175,13 @@ export const servicesRouter = new Elysia()
     return { serviceId: params.serviceId, clearedAt: timestamp };
   })
   .get(`${BASE}/:serviceId/state`, ({ params }) => {
-    return (
+    const state =
       processManager.getState(params.serviceId) ?? {
         serviceId: params.serviceId,
         projectId: params.projectId,
         status: 'stopped' as const,
-      }
-    );
+      };
+    return { ...state, health: healthMonitor.getHealth(params.serviceId) };
   })
   .get(`${BASE}/:serviceId/metrics`, ({ params, set }) => {
     const metrics = metricsCollector.getLatest(params.serviceId);
@@ -186,13 +203,7 @@ export const servicesRouter = new Elysia()
     `${BASE}/:serviceId`,
     async ({ params, body, set }) => {
       const patch = body as UpdateServiceBody;
-      const nextPatch: UpdateServiceBody = {
-        ...patch,
-        ...(patch.persistDebugWatches === true
-          ? { debugWatches: watchRegistry.listWatches(params.serviceId) }
-          : {}),
-      };
-      const updated = await updateService(params.projectId, params.serviceId, nextPatch);
+      const updated = await updateService(params.projectId, params.serviceId, patch);
       if (!updated) {
         set.status = 404;
         return { error: 'NOT_FOUND', message: 'Service not found' };

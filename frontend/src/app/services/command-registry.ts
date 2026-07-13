@@ -17,6 +17,10 @@ export interface CommandDeps {
   toggleDarkMode: () => void;
   openNewProject: () => void;
   openConfig: (projectId: string) => void;
+  openLogs: (projectId: string) => void;
+  inspectService: (projectId: string, serviceId: string) => void;
+  httpInspect: (projectId: string, serviceId: string) => void;
+  debug: (projectId: string, serviceId: string) => void;
 }
 
 export function buildCommands(d: CommandDeps): Command[] {
@@ -32,6 +36,7 @@ export function buildCommands(d: CommandDeps): Command[] {
       { id: 'stop-all', title: 'Stop all services', icon: 'square', action: () => d.stopAllServices(active.id) },
       { id: 'restart-all', title: 'Restart all services', icon: 'refresh-cw', action: () => d.restartAllServices(active.id) },
       { id: 'reload-context', title: 'Reload project context', icon: 'rotate-cw', action: () => d.reloadProjectContext(active.id) },
+      { id: 'open-logs', title: 'Open logs', icon: 'scroll-text', action: () => d.openLogs(active.id) },
     );
     for (const s of active.services) {
       cmds.push(
@@ -40,6 +45,9 @@ export function buildCommands(d: CommandDeps): Command[] {
         { id: `restart:${s.id}`, title: `Restart ${s.name}`, icon: 'refresh-cw', action: () => d.restartService(active.id, s.id) },
         { id: `terminal:${s.id}`, title: `Open terminal: ${s.name}`, icon: 'terminal', action: () => d.openTerminal(active.id, s.id, s.name) },
         { id: `killport:${s.id}`, title: `Kill port: ${s.name}`, icon: 'plug-zap', action: () => d.killServicePort(active.id, s.id) },
+        { id: `inspect:${s.id}`, title: `Inspect ${s.name}`, icon: 'activity', action: () => d.inspectService(active.id, s.id) },
+        { id: `http:${s.id}`, title: `HTTP inspector: ${s.name}`, icon: 'arrow-left-right', action: () => d.httpInspect(active.id, s.id) },
+        { id: `debug:${s.id}`, title: `Debug: ${s.name}`, icon: 'bug', action: () => d.debug(active.id, s.id) },
       );
     }
   }

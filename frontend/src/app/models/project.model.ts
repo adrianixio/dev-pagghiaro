@@ -1,4 +1,4 @@
-import { ProjectConfig, ServiceConfig, ServiceStatus, ServiceMetrics as SharedServiceMetrics } from '@dev-pagghiaro/shared';
+import { ProjectConfig, ServiceConfig, ServiceStatus, ServiceMetrics as SharedServiceMetrics, ServiceHealth } from '@dev-pagghiaro/shared';
 
 export type { ProjectConfig, ServiceConfig, ServiceStatus };
 
@@ -10,6 +10,7 @@ export interface ServiceMetrics {
 export interface UiService extends ServiceConfig {
   status: ServiceStatus;
   metrics?: ServiceMetrics;
+  health?: ServiceHealth;
 }
 
 export interface UiProject extends ProjectConfig {

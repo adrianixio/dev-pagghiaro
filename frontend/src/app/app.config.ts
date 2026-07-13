@@ -2,8 +2,10 @@ import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } fr
 import { provideRouter } from '@angular/router';
 import {
   Activity,
+  ArrowLeftRight,
   ArrowRight,
   ArrowDownToLine,
+  Bug,
   ChevronDown,
   ChevronRight,
   Columns2,
@@ -25,6 +27,7 @@ import {
   RefreshCw,
   RotateCw,
   Save,
+  ScrollText,
   Search,
   Server,
   Settings,
@@ -42,7 +45,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     importProvidersFrom(
       LucideAngularModule.pick({
-        Activity, ArrowDownToLine, ArrowRight, ChevronDown, ChevronRight, Columns2, ExternalLink, Folder, FolderPlus, GripVertical, HardDrive, ListOrdered, Maximize2, Menu, Minimize2, Moon, Pin, Play, PlugZap, Plus, RefreshCw, RotateCw, Save, Search, Server, Settings, Square, Sun, Terminal, Trash2, X
+        Activity, ArrowDownToLine, ArrowLeftRight, ArrowRight, Bug, ChevronDown, ChevronRight, Columns2, ExternalLink, Folder, FolderPlus, GripVertical, HardDrive, ListOrdered, Maximize2, Menu, Minimize2, Moon, Pin, Play, PlugZap, Plus, RefreshCw, RotateCw, Save, ScrollText, Search, Server, Settings, Square, Sun, Terminal, Trash2, X
       })
     )
   ]

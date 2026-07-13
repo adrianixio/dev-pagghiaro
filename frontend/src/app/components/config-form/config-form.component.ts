@@ -103,6 +103,59 @@ import { UiBadgeComponent } from '../../ui/ui-badge.component';
                                  class="rounded border-border bg-surface-raised text-accent focus:ring-accent dark:border-rustic-600 dark:bg-rustic-800">
                           Auto Start
                         </label>
+                        <div class="md:col-span-2">
+                          <label class="flex items-center gap-2 font-sans text-sm text-content dark:text-rustic-300">
+                            <input type="checkbox" [(ngModel)]="service.healthCheckEnabled" [name]="'hc-en-' + service.draftKey"
+                                   class="rounded border-border bg-surface-raised text-accent focus:ring-accent dark:border-rustic-600 dark:bg-rustic-800">
+                            Health Check
+                          </label>
+                          @if (service.healthCheckEnabled) {
+                            <div class="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div>
+                                <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Health Check Path</label>
+                                <input type="text" [(ngModel)]="service.healthCheckPath" [name]="'hc-path-' + service.draftKey"
+                                       class="input-field py-1.5 font-mono text-sm" placeholder="/health">
+                              </div>
+                              <div>
+                                <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Interval (ms)</label>
+                                <input type="number" [(ngModel)]="service.healthCheckIntervalMs" [name]="'hc-int-' + service.draftKey"
+                                       class="input-field py-1.5 font-mono text-sm" placeholder="10000">
+                              </div>
+                            </div>
+                          }
+                        </div>
+                        <div class="md:col-span-2">
+                          <label class="flex items-center gap-2 font-sans text-sm text-content dark:text-rustic-300">
+                            <input type="checkbox" [(ngModel)]="service.httpInspectEnabled" [name]="'http-en-' + service.draftKey"
+                                   class="rounded border-border bg-surface-raised text-accent focus:ring-accent dark:border-rustic-600 dark:bg-rustic-800">
+                            HTTP Inspect
+                          </label>
+                          @if (service.httpInspectEnabled) {
+                            <div class="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div>
+                                <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Proxy Port</label>
+                                <input type="number" [(ngModel)]="service.httpInspectProxyPort" [name]="'http-port-' + service.draftKey"
+                                       class="input-field py-1.5 font-mono text-sm" placeholder="e.g. 4000">
+                              </div>
+                            </div>
+                          }
+                        </div>
+                        <div class="md:col-span-2">
+                          <label class="flex items-center gap-2 font-sans text-sm text-content dark:text-rustic-300">
+                            <input type="checkbox" [(ngModel)]="service.debugEnabled" [name]="'dbg-en-' + service.draftKey"
+                                   class="rounded border-border bg-surface-raised text-accent focus:ring-accent dark:border-rustic-600 dark:bg-rustic-800">
+                            Debug
+                          </label>
+                          @if (service.debugEnabled) {
+                            <div class="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div>
+                                <label class="mb-1 block font-sans text-xs font-medium text-content-muted">Debug Port</label>
+                                <input type="number" [(ngModel)]="service.debugPort" [name]="'dbg-port-' + service.draftKey"
+                                       class="input-field py-1.5 font-mono text-sm" placeholder="e.g. 9229">
+                              </div>
+                            </div>
+                          }
+                        </div>
                         <div class="rounded-lg border border-dashed border-border bg-surface-raised/80 px-3 py-3 dark:border-rustic-600 dark:bg-rustic-800/70 md:col-span-2">
                           <div class="flex flex-wrap items-center justify-between gap-3">
                             <label class="flex items-center gap-2 font-sans text-sm text-content dark:text-rustic-300">
@@ -241,6 +294,13 @@ export class ConfigFormComponent {
       port: service.port ?? null,
       autoStart: Boolean(service.autoStart),
       includeInExecution: executionIds.has(service.id),
+      healthCheckEnabled: service.healthCheck?.enabled ?? false,
+      healthCheckPath: service.healthCheck?.path ?? '/',
+      healthCheckIntervalMs: service.healthCheck?.intervalMs ?? 10000,
+      httpInspectEnabled: service.httpInspect?.enabled ?? false,
+      httpInspectProxyPort: service.httpInspect?.proxyPort ?? null,
+      debugEnabled: service.debug?.enabled ?? false,
+      debugPort: service.debug?.port ?? null,
     }));
   }
 
@@ -253,6 +313,13 @@ export class ConfigFormComponent {
       port: null,
       autoStart: false,
       includeInExecution: true,
+      healthCheckEnabled: false,
+      healthCheckPath: '/',
+      healthCheckIntervalMs: 10000,
+      httpInspectEnabled: false,
+      httpInspectProxyPort: null,
+      debugEnabled: false,
+      debugPort: null,
     });
   }
 

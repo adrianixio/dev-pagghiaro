@@ -9,6 +9,7 @@ const frontendBrowserDir = join(root, 'frontend', 'dist', 'frontend', 'browser')
 const frontendOutDir = join(distDir, 'frontend');
 const frontendBrowserOutDir = join(frontendOutDir, 'browser');
 const frontendLicenses = join(root, 'frontend', 'dist', 'frontend', '3rdpartylicenses.txt');
+const bun = process.execPath;
 
 async function run(command: string[], cwd = root): Promise<void> {
   const proc = Bun.spawn(command, {
@@ -27,9 +28,9 @@ rmSync(distDir, { recursive: true, force: true });
 mkdirSync(backendDistDir, { recursive: true });
 mkdirSync(frontendBrowserOutDir, { recursive: true });
 
-await run(['bun', 'run', 'build:shared']);
-await run(['bun', 'run', 'build:frontend']);
-await run(['bun', 'build', 'apps/backend/src/index.ts', '--outdir', backendDistDir, '--target', 'bun']);
+await run([bun, 'run', 'build:shared']);
+await run([bun, 'run', 'build:frontend']);
+await run([bun, 'build', 'apps/backend/src/index.ts', '--outdir', backendDistDir, '--target', 'bun']);
 
 cpSync(frontendBrowserDir, frontendBrowserOutDir, { recursive: true });
 if (existsSync(frontendLicenses)) {

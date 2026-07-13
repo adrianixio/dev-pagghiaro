@@ -1,6 +1,6 @@
 {
   "name": "dev-pagghiaro",
-  "version": "0.1.13",
+  "version": "0.1.15",
   "description": "Local microservice orchestrator",
   "license": "MIT",
   "private": false,

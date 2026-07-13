@@ -7,6 +7,13 @@ export interface EditableServiceDraft {
   port?: number | null;
   autoStart: boolean;
   includeInExecution: boolean;
+  healthCheckEnabled: boolean;
+  healthCheckPath: string;
+  healthCheckIntervalMs: number;
+  httpInspectEnabled: boolean;
+  httpInspectProxyPort: number | null;
+  debugEnabled: boolean;
+  debugPort: number | null;
 }
 
 export interface ProjectDraft {

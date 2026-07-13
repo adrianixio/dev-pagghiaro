@@ -13,6 +13,11 @@ export interface UiToast {
 export class UiService {
   private readonly configOpenSignal = signal(false);
   private readonly editingProjectIdSignal = signal<string | null>(null);
+  private readonly logsOpenSignal = signal(false);
+  private readonly logsProjectIdSignal = signal<string | null>(null);
+  private readonly introspectTargetSignal = signal<{ projectId: string; serviceId: string } | null>(null);
+  private readonly httpInspectTargetSignal = signal<{ projectId: string; serviceId: string } | null>(null);
+  private readonly debugTargetSignal = signal<{ projectId: string; serviceId: string } | null>(null);
   private readonly darkModeSignal = signal<boolean>(this.getInitialDarkMode());
   private readonly sidebarOpenSignal = signal(false);
   private readonly isMobileSignal = signal(this.getInitialIsMobile());
@@ -22,6 +27,11 @@ export class UiService {
 
   readonly configOpen = this.configOpenSignal.asReadonly();
   readonly editingProjectId = this.editingProjectIdSignal.asReadonly();
+  readonly logsOpen = this.logsOpenSignal.asReadonly();
+  readonly logsProjectId = this.logsProjectIdSignal.asReadonly();
+  readonly introspectTarget = this.introspectTargetSignal.asReadonly();
+  readonly httpInspectTarget = this.httpInspectTargetSignal.asReadonly();
+  readonly debugTarget = this.debugTargetSignal.asReadonly();
   readonly darkMode = this.darkModeSignal.asReadonly();
   readonly sidebarOpen = this.sidebarOpenSignal.asReadonly();
   readonly isMobile = this.isMobileSignal.asReadonly();
@@ -93,6 +103,39 @@ export class UiService {
 
   closeConfig(): void {
     this.configOpenSignal.set(false);
+  }
+
+  openLogs(projectId: string): void {
+    this.logsProjectIdSignal.set(projectId);
+    this.logsOpenSignal.set(true);
+  }
+
+  closeLogs(): void {
+    this.logsOpenSignal.set(false);
+  }
+
+  openIntrospect(projectId: string, serviceId: string): void {
+    this.introspectTargetSignal.set({ projectId, serviceId });
+  }
+
+  closeIntrospect(): void {
+    this.introspectTargetSignal.set(null);
+  }
+
+  openHttpInspect(projectId: string, serviceId: string): void {
+    this.httpInspectTargetSignal.set({ projectId, serviceId });
+  }
+
+  closeHttpInspect(): void {
+    this.httpInspectTargetSignal.set(null);
+  }
+
+  openDebug(projectId: string, serviceId: string): void {
+    this.debugTargetSignal.set({ projectId, serviceId });
+  }
+
+  closeDebug(): void {
+    this.debugTargetSignal.set(null);
   }
 
   openSidebar(): void {

@@ -11,10 +11,14 @@ import type { ServiceConfig, ServiceState, ServiceStatus } from "@dev-pagghiaro/
 import { spawnPty } from "./pty-adapter";
 import type { PtyHandle, PtySize } from "./pty-adapter";
 import { logBus } from "./log-bus";
+import { logStore } from "./log-store";
 import { metricsCollector } from "./metrics-collector";
+import { healthMonitor } from "./health-monitor";
+import { proxyManager } from "./http-proxy";
 import { killProcessesListeningOnPort } from "./port-processes";
 import { stopProcessTree, isPidAlive } from "./process-tree";
 import { buildServiceProcessContext } from "./process-context";
+import { buildDebugNodeOptions, DEBUG_DEFAULT_PORT } from "./debug-options";
 
 // ─── Internal state ───────────────────────────────────────────────────────────
 
@@ -64,7 +68,7 @@ function setState(
 
 // ─── CWD resolution ───────────────────────────────────────────────────────────
 
-function resolveCwd(serviceCwd: string, projectRootPath: string): string {
+export function resolveCwd(serviceCwd: string, projectRootPath: string): string {
   // Absolute path (Unix /… or Windows C:\…)
   if (serviceCwd.startsWith("/") || /^[A-Za-z]:[\\/]/.test(serviceCwd)) {
     return serviceCwd;
@@ -89,6 +93,8 @@ export const processManager = {
     projectRootPath: string,
     initialSize?: PtySize
   ): Promise<ServiceState> {
+    logStore.attach(service.id, projectId);
+
     // Idempotent: if already running, return current state
     const existing = processes.get(service.id);
     if (existing) {
@@ -132,6 +138,12 @@ export const processManager = {
     let pty: PtyHandle;
     try {
       const processContext = await buildServiceProcessContext(projectRootPath, service);
+      if (service.debug?.enabled === true) {
+        processContext['NODE_OPTIONS'] = buildDebugNodeOptions(
+          processContext['NODE_OPTIONS'],
+          service.debug.port ?? DEBUG_DEFAULT_PORT,
+        );
+      }
       pty = spawnPty({
         command: service.command,
         cwd,
@@ -166,6 +178,21 @@ export const processManager = {
     // Track metrics
     metricsCollector.track(service.id, pty.pid);
 
+    if (service.healthCheck?.enabled === true && service.port != null) {
+      healthMonitor.track(service.id, {
+        port: service.port,
+        path: service.healthCheck.path ?? "/",
+        intervalMs: service.healthCheck.intervalMs ?? 10000,
+      });
+    }
+
+    if (service.httpInspect?.enabled === true && service.port != null) {
+      proxyManager.start(service.id, {
+        proxyPort: service.httpInspect.proxyPort ?? service.port + 10000,
+        targetPort: service.port,
+      });
+    }
+
     // Forward PTY output to the log bus
     pty.onData((chunk) => {
       logBus.emit(service.id, chunk);
@@ -174,6 +201,8 @@ export const processManager = {
     // Watch for process exit
     void pty.exited.then((code) => {
       metricsCollector.untrack(service.id);
+      healthMonitor.untrack(service.id);
+      proxyManager.stop(service.id);
       processes.delete(service.id);
       const intentional = stopping.has(service.id);
       const status = intentional || code === 0 ? "stopped" : "error";
@@ -228,6 +257,8 @@ export const processManager = {
     }
 
     metricsCollector.untrack(serviceId);
+    healthMonitor.untrack(serviceId);
+    proxyManager.stop(serviceId);
     processes.delete(serviceId);
 
     // If the tree is still alive after force-kill AND the port fallback, report

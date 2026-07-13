@@ -18,6 +18,7 @@ import { UiService } from '../models/project.model';
           <lucide-icon [name]="expanded ? 'chevron-down' : 'chevron-right'" [size]="16"></lucide-icon>
         </button>
         <ui-status-dot [status]="service.status"></ui-status-dot>
+        <span class="inline-block h-2 w-2 rounded-full" [class]="healthDotClass()" [title]="'health: ' + (service.health?.state ?? 'unknown')"></span>
         <span class="font-display font-bold text-content dark:text-rustic-100">{{ service.name }}</span>
         <code class="hidden min-w-0 flex-1 truncate font-mono text-xs text-content-muted md:block">{{ service.command }}</code>
         @if (service.port != null) { <ui-badge tone="neutral">:{{ service.port }}</ui-badge> }
@@ -30,6 +31,9 @@ import { UiService } from '../models/project.model';
           <ui-icon-button icon="rotate-cw" label="Restart" tone="warning" (click)="restart.emit()"></ui-icon-button>
           <ui-icon-button icon="square" label="Stop" tone="danger" (click)="stop.emit()"></ui-icon-button>
           <span data-action="open-terminal" class="contents"><ui-icon-button icon="terminal" label="Open terminal" tone="info" (click)="openTerminal.emit()"></ui-icon-button></span>
+          <ui-icon-button icon="activity" label="Inspect" tone="info" (click)="inspect.emit()"></ui-icon-button>
+          <ui-icon-button icon="arrow-left-right" label="HTTP inspector" tone="info" (click)="httpInspect.emit()"></ui-icon-button>
+          <ui-icon-button icon="bug" label="Debugger" tone="warning" (click)="debug.emit()"></ui-icon-button>
           <ui-icon-button icon="plug-zap" label="Kill port" (click)="killPort.emit()"></ui-icon-button>
         </div>
       </div>
@@ -46,4 +50,15 @@ export class ServiceRowComponent {
   @Output() restart = new EventEmitter<void>();
   @Output() openTerminal = new EventEmitter<void>();
   @Output() killPort = new EventEmitter<void>();
+  @Output() inspect = new EventEmitter<void>();
+  @Output() httpInspect = new EventEmitter<void>();
+  @Output() debug = new EventEmitter<void>();
+
+  healthDotClass(): string {
+    switch (this.service.health?.state) {
+      case 'up': return 'bg-green-500';
+      case 'down': return 'bg-red-500';
+      default: return 'bg-neutral-400';
+    }
+  }
 }

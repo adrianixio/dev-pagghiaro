@@ -41,7 +41,7 @@ export async function killProcessesListeningOnPort(port: number): Promise<PortKi
   };
 }
 
-async function findListeningPids(port: number): Promise<number[]> {
+export async function findListeningPids(port: number): Promise<number[]> {
   if (process.platform === 'win32') {
     return findListeningPidsWindows(port);
   }
