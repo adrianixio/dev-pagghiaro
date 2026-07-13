@@ -18,7 +18,6 @@ import { proxyManager } from "./http-proxy";
 import { killProcessesListeningOnPort } from "./port-processes";
 import { stopProcessTree, isPidAlive } from "./process-tree";
 import { buildServiceProcessContext } from "./process-context";
-import { buildDebugNodeOptions, DEBUG_DEFAULT_PORT } from "./debug-options";
 
 // ─── Internal state ───────────────────────────────────────────────────────────
 
@@ -138,12 +137,6 @@ export const processManager = {
     let pty: PtyHandle;
     try {
       const processContext = await buildServiceProcessContext(projectRootPath, service);
-      if (service.debug?.enabled === true) {
-        processContext['NODE_OPTIONS'] = buildDebugNodeOptions(
-          processContext['NODE_OPTIONS'],
-          service.debug.port ?? DEBUG_DEFAULT_PORT,
-        );
-      }
       pty = spawnPty({
         command: service.command,
         cwd,

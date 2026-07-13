@@ -11,7 +11,6 @@ import { ConfigFormComponent } from '../components/config-form/config-form.compo
 import { LogsPanelComponent } from '../logs/logs-panel.component';
 import { IntrospectionPanelComponent } from '../diagnostics/introspection-panel.component';
 import { HttpInspectorPanelComponent } from '../http/http-inspector-panel.component';
-import { DebugPanelComponent } from '../debug/debug-panel.component';
 import { UiService } from '../services/ui.service';
 import { ProjectService } from '../services/project.service';
 import { TerminalManager } from '../terminal/terminal-manager.service';
@@ -24,7 +23,7 @@ import { buildCommands } from '../services/command-registry';
   standalone: true,
   imports: [CommonModule, IconRailComponent, SidebarComponent, ToolbarComponent, ServiceListComponent,
     TerminalPanelComponent, FloatingTerminalComponent, CommandPaletteComponent, ConfigFormComponent, LogsPanelComponent,
-    IntrospectionPanelComponent, HttpInspectorPanelComponent, DebugPanelComponent],
+    IntrospectionPanelComponent, HttpInspectorPanelComponent],
   template: `
     <div class="flex h-screen w-screen overflow-hidden bg-surface font-sans text-content dark:bg-rustic-900 dark:text-rustic-100">
       @if (ui.isMobile() && ui.sidebarOpen()) {
