@@ -397,6 +397,41 @@ export class ProjectService {
     await this.loadProjects();
   }
 
+  async setServiceDebug(projectId: string, serviceId: string, enabled: boolean): Promise<void> {
+    const service = this.getProjectById(projectId)?.services.find((entry) => entry.id === serviceId);
+    await this.updateService(projectId, serviceId, { debug: { ...service?.debug, enabled } });
+    this.projectsSignal.update((projects) =>
+      projects.map((project) => {
+        if (project.id !== projectId) return project;
+        return {
+          ...project,
+          services: project.services.map((entry) =>
+            entry.id === serviceId ? { ...entry, debug: { ...entry.debug, enabled } } : entry
+          ),
+        };
+      })
+    );
+  }
+
+  async setServicePersistDebugWatches(
+    projectId: string,
+    serviceId: string,
+    enabled: boolean
+  ): Promise<void> {
+    await this.updateService(projectId, serviceId, { persistDebugWatches: enabled });
+    this.projectsSignal.update((projects) =>
+      projects.map((project) => {
+        if (project.id !== projectId) return project;
+        return {
+          ...project,
+          services: project.services.map((entry) =>
+            entry.id === serviceId ? { ...entry, persistDebugWatches: enabled } : entry
+          ),
+        };
+      })
+    );
+  }
+
   private startPolling(): void {
     setInterval(() => {
       for (const project of this.projectsSignal()) {
