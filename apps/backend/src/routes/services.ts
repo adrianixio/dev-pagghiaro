@@ -8,6 +8,7 @@ import {
   removeService,
   updateService,
 } from '../config-store';
+import { watchRegistry } from '../debug/watch-registry';
 import { logBus } from '../log-bus';
 import { healthMonitor } from '../health-monitor';
 import { metricsCollector } from '../metrics-collector';
@@ -33,6 +34,7 @@ const CreateServiceSchema = t.Object({
     t.Object({ enabled: t.Optional(t.Boolean()), proxyPort: t.Optional(t.Number({ minimum: 0 })) })
   ),
   debug: t.Optional(t.Object({ enabled: t.Optional(t.Boolean()), port: t.Optional(t.Number({ minimum: 0 })) })),
+  persistDebugWatches: t.Optional(t.Boolean()),
 });
 
 const UpdateServiceSchema = t.Object({
@@ -54,6 +56,7 @@ const UpdateServiceSchema = t.Object({
     t.Object({ enabled: t.Optional(t.Boolean()), proxyPort: t.Optional(t.Number({ minimum: 0 })) })
   ),
   debug: t.Optional(t.Object({ enabled: t.Optional(t.Boolean()), port: t.Optional(t.Number({ minimum: 0 })) })),
+  persistDebugWatches: t.Optional(t.Boolean()),
 });
 
 const BASE = '/api/projects/:projectId/services';
@@ -89,6 +92,9 @@ export const servicesRouter = new Elysia()
         ...(payload.healthCheck !== undefined ? { healthCheck: payload.healthCheck } : {}),
         ...(payload.httpInspect !== undefined ? { httpInspect: payload.httpInspect } : {}),
         ...(payload.debug !== undefined ? { debug: payload.debug } : {}),
+        ...(payload.persistDebugWatches !== undefined
+          ? { persistDebugWatches: payload.persistDebugWatches }
+          : {}),
       };
 
       const created = await addService(params.projectId, service);
@@ -203,7 +209,13 @@ export const servicesRouter = new Elysia()
     `${BASE}/:serviceId`,
     async ({ params, body, set }) => {
       const patch = body as UpdateServiceBody;
-      const updated = await updateService(params.projectId, params.serviceId, patch);
+      const nextPatch: UpdateServiceBody = {
+        ...patch,
+        ...(patch.persistDebugWatches === true
+          ? { debugWatches: watchRegistry.listWatches(params.serviceId) }
+          : {}),
+      };
+      const updated = await updateService(params.projectId, params.serviceId, nextPatch);
       if (!updated) {
         set.status = 404;
         return { error: 'NOT_FOUND', message: 'Service not found' };

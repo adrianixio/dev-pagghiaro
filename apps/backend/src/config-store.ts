@@ -4,7 +4,13 @@
 
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import type { PagghiaroConfig, ProjectConfig, ProjectExecutionOrder, ServiceConfig } from '@dev-pagghiaro/shared';
+import type {
+  DebugWatch,
+  PagghiaroConfig,
+  ProjectConfig,
+  ProjectExecutionOrder,
+  ServiceConfig,
+} from '@dev-pagghiaro/shared';
 
 const DEFAULT_CONFIG: PagghiaroConfig = { version: '1', projects: [] };
 
@@ -78,6 +84,28 @@ function isDebugConfig(value: unknown): boolean {
   );
 }
 
+// Ported from 3e08ce1 (debug watch stack). Validates the persisted shape of a
+// single debug watch as stored on ServiceConfig.debugWatches.
+function isDebugWatch(value: unknown): value is DebugWatch {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<DebugWatch>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.serviceId === 'string' &&
+    typeof candidate.expr === 'string' &&
+    candidate.mode === 'interval' &&
+    typeof candidate.intervalMs === 'number' &&
+    Number.isFinite(candidate.intervalMs) &&
+    typeof candidate.bufferSize === 'number' &&
+    Number.isFinite(candidate.bufferSize) &&
+    typeof candidate.createdAt === 'number' &&
+    Number.isFinite(candidate.createdAt)
+  );
+}
+
 export function isServiceConfig(value: unknown): value is ServiceConfig {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -95,7 +123,10 @@ export function isServiceConfig(value: unknown): value is ServiceConfig {
     (candidate.color === undefined || typeof candidate.color === 'string') &&
     isHealthCheckConfig((candidate as { healthCheck?: unknown }).healthCheck) &&
     isHttpInspectConfig((candidate as { httpInspect?: unknown }).httpInspect) &&
-    isDebugConfig((candidate as { debug?: unknown }).debug)
+    isDebugConfig((candidate as { debug?: unknown }).debug) &&
+    (candidate.persistDebugWatches === undefined || typeof candidate.persistDebugWatches === 'boolean') &&
+    (candidate.debugWatches === undefined ||
+      (Array.isArray(candidate.debugWatches) && candidate.debugWatches.every((watch) => isDebugWatch(watch))))
   );
 }
 
