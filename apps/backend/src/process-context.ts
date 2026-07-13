@@ -1,8 +1,66 @@
 import { join, resolve } from 'node:path';
+import { platform } from 'node:process';
 import type { EnvVarProvenance, ProjectConfig, ServiceConfig } from '@dev-pagghiaro/shared';
 
 const BASE_ENV_FILES = ['.env', '.env.local'];
 const DEFAULT_MODE = 'development';
+
+// ─── Python support (ported from 3e08ce1) ──────────────────────────────────────
+// Auto-detects a project/service-local virtualenv so spawned Python services
+// (and the debugpy probe/install in debug/debugpy-installer.ts) resolve the
+// right interpreter without the user having to activate the venv manually.
+
+const PYTHON_COMMAND_PREFIXES = [
+  'python', 'python3', 'python2',
+  'uvicorn', 'gunicorn', 'flask', 'fastapi',
+  'django-admin', 'manage.py', './manage.py',
+  'celery', 'pytest', 'py.test', 'ruff', 'mypy',
+];
+
+const VENV_CANDIDATES = ['venv', '.venv', 'env', 'virtualenv'];
+
+function isPythonCommand(command: string): boolean {
+  const firstWord = command.trim().split(/\s+/)[0] ?? '';
+  // Strip leading ./ or ../
+  const base = firstWord.replace(/^\.\.?\//, '');
+  return PYTHON_COMMAND_PREFIXES.some(
+    (prefix) => base === prefix || base.startsWith(prefix + ' ')
+  );
+}
+
+async function detectVenvBinDir(serviceRoot: string): Promise<string | null> {
+  const isWindows = platform === 'win32';
+  const subDir = isWindows ? 'Scripts' : 'bin';
+  const pythonExe = isWindows ? 'python.exe' : 'python';
+
+  for (const candidate of VENV_CANDIDATES) {
+    const pythonPath = resolve(serviceRoot, candidate, subDir, pythonExe);
+    const file = Bun.file(pythonPath);
+    if (await file.exists()) {
+      return resolve(serviceRoot, candidate, subDir);
+    }
+  }
+  return null;
+}
+
+async function buildPythonEnv(serviceRoot: string): Promise<Record<string, string>> {
+  const env: Record<string, string> = {
+    PYTHONUNBUFFERED: '1',
+    PYTHONDONTWRITEBYTECODE: '1',
+  };
+
+  const venvBin = await detectVenvBinDir(serviceRoot);
+  if (venvBin) {
+    const currentPath = process.env['PATH'] ?? '';
+    const separator = platform === 'win32' ? ';' : ':';
+    env['PATH'] = `${venvBin}${separator}${currentPath}`;
+    env['VIRTUAL_ENV'] = resolve(venvBin, '..'); // parent of bin/Scripts
+  }
+
+  return env;
+}
+
+// ─── Public API ─────────────────────────────────────────────────────────────────
 
 export async function buildServiceProcessContext(
   projectRootPath: string,
@@ -12,8 +70,10 @@ export async function buildServiceProcessContext(
   const mode = resolveEnvMode();
   const projectEnv = await loadEnvDirectory(projectRootPath, mode);
   const serviceEnv = serviceRoot === projectRootPath ? {} : await loadEnvDirectory(serviceRoot, mode);
+  const pythonEnv = isPythonCommand(service.command) ? await buildPythonEnv(serviceRoot) : {};
 
   return {
+    ...pythonEnv,
     ...projectEnv,
     ...serviceEnv,
     ...(service.env ?? {}),
@@ -42,6 +102,9 @@ export async function describeServiceEnv(
 
   // Layers low → high precedence (mirrors buildServiceProcessContext).
   const layers: Array<{ source: string; env: Record<string, string> }> = [];
+  if (isPythonCommand(service.command)) {
+    layers.push({ source: 'python-venv', env: await buildPythonEnv(serviceRoot) });
+  }
   for (const fileName of fileNames) {
     layers.push({ source: `project/${fileName}`, env: await loadEnvFile(join(projectRootPath, fileName)) });
   }

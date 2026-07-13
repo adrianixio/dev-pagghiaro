@@ -29,3 +29,21 @@ test('accepts a valid debug config and rejects a malformed one', () => {
   expect(isServiceConfig({ id: 's', name: 'S', command: 'true', cwd: '.', debug: { enabled: 1 } })).toBe(false);
   expect(isServiceConfig({ id: 's', name: 'S', command: 'true', cwd: '.', debug: { port: -1 } })).toBe(false);
 });
+
+test('accepts debugWatches with mode "interval" and "onChange" (DebugWatchMode), and rejects an invalid mode', () => {
+  const intervalWatch = {
+    id: 'w1',
+    serviceId: 's',
+    expr: 'x.y',
+    mode: 'interval',
+    intervalMs: 1000,
+    bufferSize: 100,
+    createdAt: Date.now(),
+  };
+  const onChangeWatch = { ...intervalWatch, id: 'w2', mode: 'onChange' };
+
+  expect(isServiceConfig({ ...base, debugWatches: [intervalWatch] })).toBe(true);
+  expect(isServiceConfig({ ...base, debugWatches: [onChangeWatch] })).toBe(true);
+  expect(isServiceConfig({ ...base, debugWatches: [intervalWatch, onChangeWatch] })).toBe(true);
+  expect(isServiceConfig({ ...base, debugWatches: [{ ...intervalWatch, mode: 'bogus' }] })).toBe(false);
+});

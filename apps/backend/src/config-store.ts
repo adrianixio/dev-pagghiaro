@@ -4,7 +4,13 @@
 
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import type { PagghiaroConfig, ProjectConfig, ProjectExecutionOrder, ServiceConfig } from '@dev-pagghiaro/shared';
+import type {
+  DebugWatch,
+  PagghiaroConfig,
+  ProjectConfig,
+  ProjectExecutionOrder,
+  ServiceConfig,
+} from '@dev-pagghiaro/shared';
 
 const DEFAULT_CONFIG: PagghiaroConfig = { version: '1', projects: [] };
 
@@ -78,6 +84,32 @@ function isDebugConfig(value: unknown): boolean {
   );
 }
 
+// Ported from 3e08ce1 (debug watch stack). Validates the persisted shape of a
+// single debug watch as stored on ServiceConfig.debugWatches. mode must match
+// DebugWatchMode ('interval' | 'onChange') exactly - rejecting 'onChange'
+// here would fail validation on the very next config read after a panel user
+// creates an onChange watch, since watchRegistry.addWatch/persistWatchList
+// happily writes it to disk.
+function isDebugWatch(value: unknown): value is DebugWatch {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<DebugWatch>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.serviceId === 'string' &&
+    typeof candidate.expr === 'string' &&
+    (candidate.mode === 'interval' || candidate.mode === 'onChange') &&
+    typeof candidate.intervalMs === 'number' &&
+    Number.isFinite(candidate.intervalMs) &&
+    typeof candidate.bufferSize === 'number' &&
+    Number.isFinite(candidate.bufferSize) &&
+    typeof candidate.createdAt === 'number' &&
+    Number.isFinite(candidate.createdAt)
+  );
+}
+
 export function isServiceConfig(value: unknown): value is ServiceConfig {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -95,7 +127,10 @@ export function isServiceConfig(value: unknown): value is ServiceConfig {
     (candidate.color === undefined || typeof candidate.color === 'string') &&
     isHealthCheckConfig((candidate as { healthCheck?: unknown }).healthCheck) &&
     isHttpInspectConfig((candidate as { httpInspect?: unknown }).httpInspect) &&
-    isDebugConfig((candidate as { debug?: unknown }).debug)
+    isDebugConfig((candidate as { debug?: unknown }).debug) &&
+    (candidate.persistDebugWatches === undefined || typeof candidate.persistDebugWatches === 'boolean') &&
+    (candidate.debugWatches === undefined ||
+      (Array.isArray(candidate.debugWatches) && candidate.debugWatches.every((watch) => isDebugWatch(watch))))
   );
 }
 
@@ -226,6 +261,23 @@ export async function removeProject(id: string): Promise<boolean> {
 export async function getService(projectId: string, serviceId: string): Promise<ServiceConfig | undefined> {
   const project = await getProject(projectId);
   return project?.services.find((service) => service.id === serviceId);
+}
+
+// Restored from 3e08ce1: resolves a service by id across all projects, since
+// the debug watch/recording routes are keyed only by serviceId (no projectId
+// in the URL). Returns the owning projectId alongside the service so callers
+// can thread it into project-scoped mutators like updateService.
+export async function findServiceById(
+  serviceId: string
+): Promise<{ projectId: string; service: ServiceConfig } | undefined> {
+  const cfg = await readRaw();
+  for (const project of cfg.projects) {
+    const service = project.services.find((entry) => entry.id === serviceId);
+    if (service) {
+      return { projectId: project.id, service };
+    }
+  }
+  return undefined;
 }
 
 export async function addService(projectId: string, service: ServiceConfig): Promise<ServiceConfig | undefined> {
